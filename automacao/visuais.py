@@ -368,16 +368,37 @@ def imagem_pollinations(prompt, destino, semente):
     return _baixar(url, destino, timeout=240)
 
 
+def flux_nvidia(corpo, modelo="flux.1-dev"):
+    """Pede uma imagem ao FLUX da NVIDIA e devolve os bytes.
+
+    Em 2026-11-18 a NVIDIA passou a recusar o campo "seed" (422 extra_forbidden). Se ela recusar algum campo, ele é
+    tirado e o pedido é refeito, para a ferramenta não parar a cada mudança da API.
+    """
+    corpo = dict(corpo)
+    for _ in range(len(corpo)):
+        r = requests.post(
+            f"https://ai.api.nvidia.com/v1/genai/black-forest-labs/{modelo}",
+            headers={"Authorization": f"Bearer {config.NVIDIA_API_KEY}", "Accept": "application/json"},
+            json=corpo, timeout=120)
+        if r.status_code == 422:
+            try:
+                extras = [d["loc"][-1] for d in r.json().get("detail", []) if d.get("type") == "extra_forbidden"]
+            except ValueError:
+                extras = []
+            extras = [c for c in extras if c in corpo and c != "prompt"]
+            if extras:
+                for c in extras:
+                    corpo.pop(c)
+                continue
+        if not r.ok:
+            raise RuntimeError(f"NVIDIA {modelo}: erro {r.status_code} {r.text[:300]}")
+        return base64.b64decode(r.json()["artifacts"][0]["base64"])
+    raise RuntimeError(f"NVIDIA {modelo}: pedido recusado")
+
+
 def imagem_nvidia(prompt, destino, semente):
-    r = requests.post(
-        "https://ai.api.nvidia.com/v1/genai/black-forest-labs/flux.1-dev",
-        headers={"Authorization": f"Bearer {config.NVIDIA_API_KEY}", "Accept": "application/json"},
-        json={"prompt": prompt, "mode": "base", "cfg_scale": 3.5, "width": 1344, "height": 768,
-              "seed": semente, "steps": 30},
-        timeout=90,
-    )
-    r.raise_for_status()
-    destino.write_bytes(base64.b64decode(r.json()["artifacts"][0]["base64"]))
+    destino.write_bytes(flux_nvidia({"prompt": prompt, "mode": "base", "cfg_scale": 3.5, "width": 1344, "height": 768,
+                                     "steps": 30}))
     return destino
 
 

@@ -524,15 +524,10 @@ def thumbs(pasta):
 # ---------------------------------------------------------------- mascote
 
 def _flux_nvidia(modelo, prompt, semente):
-    import requests
-    corpo = {"prompt": prompt, "width": 1024, "height": 1024, "seed": semente}
+    from . import visuais
+    corpo = {"prompt": prompt, "width": 1024, "height": 1024}
     corpo.update({"mode": "base", "cfg_scale": 3.5, "steps": 30} if modelo == "flux.1-dev" else {"steps": 4})
-    resp = requests.post(f"https://ai.api.nvidia.com/v1/genai/black-forest-labs/{modelo}",
-                         headers={"Authorization": f"Bearer {config.NVIDIA_API_KEY}", "Accept": "application/json"},
-                         json=corpo, timeout=120)
-    if not resp.ok:
-        raise RuntimeError(f"NVIDIA {modelo}: erro {resp.status_code} {resp.text[:300]}")
-    return base64.b64decode(resp.json()["artifacts"][0]["base64"])
+    return visuais.flux_nvidia(corpo, modelo)
 
 
 def _pollinations(prompt, semente):
@@ -554,7 +549,7 @@ def _pollinations(prompt, semente):
 
 def mascote(variacoes=4, descricao=None):
     """Tenta o FLUX da NVIDIA (dev, depois schnell); se a chave não tiver acesso, usa o Pollinations (grátis, sem
-    chave). Em 2026-11-18 o flux.1-dev devolveu 403 para a chave do dono."""
+    chave). O FLUX não aceita mais semente (seed): as variações saem diferentes a cada pedido."""
     destino = config.RAIZ / "canal_jogos"
     destino.mkdir(exist_ok=True)
     prompt = descricao or MASCOTE
