@@ -13,6 +13,10 @@ sem o rosto do seu apresentador. A outra pessoa descompacta, roda `instalar.bat`
 Quem usa o Claude Code pode copiar `extras\skill-roteiro-mestre` para `%USERPROFILE%\.claude\skills\roteiro-mestre`
 (ajustando o caminho da pasta dentro do SKILL.md, se for outro).
 
+**Na nuvem (Claude Code, Linux):** a ferramenta também roda lá, pelo `./rodar.sh` no lugar do `.\rodar.bat`
+(mesmos comandos). Lá não há placa de vídeo nem `.env`: imagens de IA vêm do Pollinations, e Pixabay e pesquisa do
+YouTube ficam para o Windows. Detalhes no CLAUDE.md.
+
 ## 1. Configurar (uma vez)
 
 Abra o arquivo `.env` (no Bloco de Notas) e preencha:

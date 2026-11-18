@@ -28,7 +28,7 @@ async def _narrar(texto, destino, voz, velocidade, limite):
     async with limite:
         for tentativa in range(3):
             try:
-                await edge_tts.Communicate(texto, voz, rate=velocidade).save(str(destino))
+                await edge_tts.Communicate(texto, voz, rate=velocidade, proxy=config.PROXY).save(str(destino))
                 return
             except Exception:
                 if tentativa == 2:
@@ -158,5 +158,5 @@ def narrar_cenas(roteiro, pasta_projeto, voz=None, velocidade=None, em_paralelo=
 
 
 def listar_vozes():
-    vozes = asyncio.run(edge_tts.list_voices())
+    vozes = asyncio.run(edge_tts.list_voices(proxy=config.PROXY))
     return [v for v in vozes if v["Locale"].startswith("pt-")]

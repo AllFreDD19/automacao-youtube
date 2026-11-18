@@ -22,7 +22,7 @@ import subprocess
 import sys
 from pathlib import Path
 
-from PIL import Image, ImageDraw, ImageFont
+from PIL import Image, ImageDraw
 
 from . import config, edicao, historia
 
@@ -40,11 +40,11 @@ EXTENSOES = (".mp4", ".mkv", ".mov", ".webm", ".avi")
 ESTILOS_ASS = {
     "longo": ["Style: Default,Arial,58,&H00FFFFFF,&H00FFFFFF,&H00000000,&H64000000,-1,0,0,0,100,100,0,0,1,4,1,2,"
               "80,80,60,1",
-              "Style: Tela,Impact,84,&H0000D7FF,&H0000D7FF,&H00000000,&H64000000,0,0,0,0,100,100,1,0,1,6,2,8,"
+              f"Style: Tela,{config.FONTE_TITULO_NOME},{round(84 * config.FONTE_TITULO_ESCALA)},&H0000D7FF,&H0000D7FF,&H00000000,&H64000000,0,0,0,0,100,100,1,0,1,6,2,8,"
               "60,60,50,1"],
     "curto": ["Style: Default,Arial,64,&H00FFFFFF,&H00FFFFFF,&H00000000,&H64000000,-1,0,0,0,100,100,0,0,1,5,1,2,"
               "60,60,330,1",
-              "Style: Tela,Impact,104,&H00FFFFFF,&H00FFFFFF,&H00000000,&H64000000,0,0,0,0,100,100,1,0,1,8,3,8,"
+              f"Style: Tela,{config.FONTE_TITULO_NOME},{round(104 * config.FONTE_TITULO_ESCALA)},&H00FFFFFF,&H00FFFFFF,&H00000000,&H64000000,0,0,0,0,100,100,1,0,1,8,3,8,"
               "50,50,230,1"],
 }
 MASCOTE = ("original cartoon mascot character for a Brazilian gaming YouTube channel, anime-inspired but ORIGINAL design "
@@ -104,12 +104,7 @@ def _video(pasta, nome):
 
 
 def _fonte(tamanho):
-    for nome in ("arialbd.ttf", "arial.ttf", "DejaVuSans-Bold.ttf"):
-        try:
-            return ImageFont.truetype(nome, tamanho)
-        except OSError:
-            continue
-    return ImageFont.load_default(size=tamanho)
+    return config.fonte_texto(tamanho, negrito=True)
 
 
 def ler_roteiro(pasta):

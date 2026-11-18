@@ -5,10 +5,10 @@ import re
 
 from PIL import Image, ImageDraw, ImageEnhance, ImageFont, ImageOps
 
-from . import llm, visuais
+from . import config, llm, visuais
 
 LARGURA, ALTURA = 1280, 720
-FONTE = r"C:\Windows\Fonts\impact.ttf"
+FONTE = config.FONTE_TITULO
 AMARELO, BRANCO, PRETO = (255, 214, 0), (255, 255, 255), (0, 0, 0)
 
 

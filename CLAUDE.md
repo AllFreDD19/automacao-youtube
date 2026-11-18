@@ -80,6 +80,18 @@ Se o canal não for dito, perguntar. Campos "[preencher]": perguntar ao dono, nu
 ```
 
 ## Como a ferramenta funciona (técnico)
+- Roda em dois lugares: no Windows do dono (`.\rodar.bat`, placa RTX 3050, chaves no `.env`) e no Claude Code na
+  nuvem (Linux, sem placa, `./rodar.sh`; repositório github.com/AllFreDD19/automacao-youtube). Código no GitHub;
+  vídeos, áudios e projetos ficam fora dele (`.gitignore`). Na nuvem:
+  - Sem `.env`: a chave da NVIDIA é uma credencial do ambiente (o proxy injeta), mas em 2026-11-18 o FLUX respondia
+    401 aqui e funcionava no Windows. Imagens de IA aqui: Pollinations (`image.pollinations.ai`, grátis, sem chave;
+    põe marca d'água no canto inferior direito: recortar). Pixabay e YouTube API usam a chave na URL: só no Windows.
+  - Roteiros: escritos pelo Claude direto (Nemotron fica para o Windows).
+  - Whisper no processador (`automacao/transcrever.py` escolhe sozinho), ~1,5x o tempo do áudio.
+  - Fontes: Anton (`fontes/`, parecida com a Impact) e Liberation Sans no lugar da Arial; `config.py` escolhe.
+  - Edge TTS funciona pelo proxy (`config.PROXY`).
+  - Arquivos do dono (gameplay, narração do Clipchamp) chegam pelo chat em `/root/.claude/uploads/...`: copiar para
+    `projetos/<nome>/gameplay/` e `projetos/<nome>/narracao_usuario.mp3`. Entregar com SendUserFile.
 - Narração: Kokoro local (inglês, voz am_michael); Piper local para espanhol (es_ES-davefx-medium), alemão
   (de_DE-thorsten_emotional-medium#neutral) e francês (fr_FR-tom-medium), modelos em `vozes_piper/` (baixados pelo
   instalar.ps1); Edge TTS para os demais idiomas. Só quando a ferramenta narra: nos canais com voz do Clipchamp

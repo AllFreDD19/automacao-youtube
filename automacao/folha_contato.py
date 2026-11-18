@@ -33,7 +33,7 @@ def gerar(roteiro, pasta_projeto, destino=None):
     linhas = (len(cenas) + COLUNAS - 1) // COLUNAS
     folha = Image.new("RGB", (COLUNAS * LARG, linhas * (ALT + 22)), "white")
     desenho = ImageDraw.Draw(folha)
-    fonte = ImageFont.truetype(r"C:\Windows\Fonts\arial.ttf", 13)
+    fonte = config.fonte_texto(13)
     for k, cena in enumerate(cenas):
         x, y = (k % COLUNAS) * LARG, (k // COLUNAS) * (ALT + 22)
         try:

@@ -11,6 +11,49 @@ load_dotenv(RAIZ / ".env")
 
 PASTA_PROJETOS = RAIZ / "projetos"
 PASTA_MUSICAS = RAIZ / "musicas"
+PASTA_FONTES = RAIZ / "fontes"
+
+# A ferramenta roda no Windows do dono e no Linux do Claude Code na nuvem (desde 2026-11-18).
+NO_WINDOWS = os.name == "nt"
+_IMPACT = Path(os.environ.get("WINDIR", r"C:\Windows")) / "Fonts" / "impact.ttf"
+# Fonte grossa das thumbnails e do texto na tela: Impact no Windows; no Linux, Anton (parecida, licença livre OFL,
+# guardada em fontes/)
+FONTE_TITULO = str(_IMPACT) if NO_WINDOWS and _IMPACT.exists() else str(PASTA_FONTES / "Anton-Regular.ttf")
+FONTE_TITULO_NOME = "Impact" if NO_WINDOWS and _IMPACT.exists() else "Anton"
+# A Anton é mais estreita que a Impact: no texto das legendas (libass) ela precisa de letra ~30% maior
+FONTE_TITULO_ESCALA = 1.0 if FONTE_TITULO_NOME == "Impact" else 1.3
+# Na nuvem a internet passa por um proxy; o Edge TTS (aiohttp) não lê HTTPS_PROXY sozinho
+PROXY = os.environ.get("HTTPS_PROXY") or os.environ.get("https_proxy") or None
+
+
+def fonte_texto(tamanho, negrito=False):
+    """Fonte comum (Arial no Windows; Liberation Sans ou DejaVu no Linux) para folhas de contato e rótulos."""
+    from PIL import ImageFont
+    nomes = (["arialbd.ttf", "LiberationSans-Bold.ttf", "DejaVuSans-Bold.ttf"] if negrito
+             else ["arial.ttf", "LiberationSans-Regular.ttf", "DejaVuSans.ttf"])
+    for nome in nomes:
+        try:
+            return ImageFont.truetype(nome, tamanho)
+        except OSError:
+            continue
+    return ImageFont.load_default(size=tamanho)
+
+
+def _registrar_fontes_linux():
+    """As legendas (libass) acham fontes pelo fontconfig: copia as de fontes/ para a pasta de fontes do usuário."""
+    if NO_WINDOWS or not PASTA_FONTES.exists():
+        return
+    destino = Path.home() / ".local" / "share" / "fonts"
+    novas = [f for f in PASTA_FONTES.glob("*.ttf") if not (destino / f.name).exists()]
+    if novas:
+        destino.mkdir(parents=True, exist_ok=True)
+        for f in novas:
+            shutil.copy(f, destino / f.name)
+        import subprocess
+        subprocess.run(["fc-cache", "-f", str(destino)], capture_output=True)
+
+
+_registrar_fontes_linux()
 
 
 def _env(nome, padrao=""):
