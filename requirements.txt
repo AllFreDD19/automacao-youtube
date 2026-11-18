@@ -1,0 +1,15 @@
+# Pacotes da ferramenta (Python 3.12). O PyTorch do CLIP vem da versão para processador,
+# instalada à parte pelo instalar.bat (--index-url https://download.pytorch.org/whl/cpu).
+edge-tts==7.2.8
+open_clip_torch==3.3.0
+openai==3.24.0
+pillow==12.3.0
+python-dotenv==1.2.4
+requests==2.34.2
+# Vozes locais: Kokoro (inglês) e Piper (espanhol, alemão, francês; modelos baixados pelo instalar.ps1)
+kokoro==0.9.4
+misaki[en]==0.9.4
+piper-tts==1.8.0
+soundfile==0.14.0
+# Transcrição da narração gravada (vídeos de história e documentário com a voz do dono do canal)
+faster-whisper==1.2.1

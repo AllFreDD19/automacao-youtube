@@ -1,0 +1,10 @@
+# chaves: nunca subir
+.env
+# ambiente Python, modelos e gerados (grandes ou da máquina)
+.venv/
+__pycache__/
+vozes_piper/
+projetos/
+biblioteca/paisagens/*.mp4
+musicas/
+*.zip
