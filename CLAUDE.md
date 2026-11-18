@@ -83,6 +83,7 @@ Se o canal não for dito, perguntar. Campos "[preencher]": perguntar ao dono, nu
 - Roda em dois lugares: no Windows do dono (`.\rodar.bat`, placa RTX 3050, chaves no `.env`) e no Claude Code na
   nuvem (Linux, sem placa, `./rodar.sh`; repositório github.com/AllFreDD19/automacao-youtube). Código no GitHub;
   vídeos, áudios e projetos ficam fora dele (`.gitignore`). Na nuvem:
+  - Sessão nova: rodar `bash instalar_nuvem.sh` antes de tudo (ffmpeg, fontes e pacotes Python).
   - Sem `.env`: a chave da NVIDIA é uma credencial do ambiente (o proxy injeta), mas em 2026-11-18 o FLUX respondia
     401 aqui e funcionava no Windows. Imagens de IA aqui: Pollinations (`image.pollinations.ai`, grátis, sem chave;
     põe marca d'água no canto inferior direito: recortar). Pixabay e YouTube API usam a chave na URL: só no Windows.
