@@ -1,6 +1,6 @@
 # Pacotes da ferramenta (Python 3.12). O PyTorch do CLIP vem da versão para processador,
 # instalada à parte pelo instalar.bat (--index-url https://download.pytorch.org/whl/cpu).
-edge-tts==7.2.8
+edge-tts==7.3.1
 open_clip_torch==3.3.0
 openai==3.24.0
 pillow==12.3.0
