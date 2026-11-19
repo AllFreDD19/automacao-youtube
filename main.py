@@ -257,6 +257,18 @@ def cmd_tudo(a):
     cmd_thumb(a)
 
 
+def cmd_voz(a):
+    """Narra um texto com a voz do canal (no lugar do Clipchamp)."""
+    from pathlib import Path
+    perfil = config.VOZES_CANAIS[a.canal]
+    origem = Path(a.texto)
+    if not origem.exists():
+        raise SystemExit(f"Texto não encontrado: {origem}")
+    destino = Path(a.saida) if a.saida else origem.with_name("narracao_usuario.mp3")
+    narracao.narrar_texto(origem.read_text(encoding="utf-8-sig"), destino, a.voz or perfil["voz"],
+                          a.velocidade or perfil["velocidade"])
+
+
 def cmd_vozes(a):
     for v in narracao.listar_vozes():
         print(f"  {v['ShortName']:<28} {v['Gender']}")
@@ -323,6 +335,14 @@ def main():
 
     s = sub.add_parser("jogo", help="canal de jogos: preparar | gravar | montar | curtos | thumb | mascote")
     jogos.opcoes(s)
+
+    s = sub.add_parser("voz", help="narra um texto com a voz do canal (no lugar do Clipchamp)")
+    s.add_argument("canal", choices=sorted(config.VOZES_CANAIS))
+    s.add_argument("texto", help="arquivo .txt (parágrafos separados por linha em branco)")
+    s.add_argument("--saida", help="arquivo de áudio (padrão: narracao_usuario.mp3 ao lado do texto)")
+    s.add_argument("--voz", help="outra voz do Edge, ex.: en-US-AndrewMultilingualNeural")
+    s.add_argument("--velocidade", help='ex.: "+8%%"')
+    s.set_defaults(func=cmd_voz)
 
     s = sub.add_parser("vozes", help="lista vozes em português")
     s.set_defaults(func=cmd_vozes)

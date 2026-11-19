@@ -160,3 +160,35 @@ def narrar_cenas(roteiro, pasta_projeto, voz=None, velocidade=None, em_paralelo=
 def listar_vozes():
     vozes = asyncio.run(edge_tts.list_voices(proxy=config.PROXY))
     return [v for v in vozes if v["Locale"].startswith("pt-")]
+
+
+def narrar_texto(texto, destino, voz, velocidade="+0%"):
+    """Narra um texto inteiro num arquivo só (substitui o Clipchamp). Parágrafos separados por linha em branco viram
+    blocos narrados um a um (se um falhar, só ele é refeito) e são juntados com uma pausa curta, como no Clipchamp."""
+    from pathlib import Path
+    destino = Path(destino)
+    blocos = [b.strip() for b in re.split(r"\n\s*\n", texto) if b.strip()]
+    pasta = destino.parent / f"_{destino.stem}_blocos"
+    pasta.mkdir(parents=True, exist_ok=True)
+    tarefas = [(b, pasta / f"bloco_{i:03d}.mp3") for i, b in enumerate(blocos, 1)]
+    faltam = [(b, d) for b, d in tarefas if not d.exists() or d.stat().st_size == 0]
+    print(f"  {len(blocos)} bloco(s), {len(texto):,} caracteres, voz {voz} ({velocidade})")
+    if faltam:
+        asyncio.run(_narrar_todas(faltam, voz, velocidade, 4))
+    pausa = pasta / "pausa.mp3"
+    if not pausa.exists():
+        subprocess.run([config.ffmpeg(), "-y", "-loglevel", "error", "-f", "lavfi", "-i",
+                        "anullsrc=r=24000:cl=mono", "-t", "0.45", "-b:a", "48k", str(pausa)], check=True)
+    lista = pasta / "lista.txt"
+    itens = []
+    for _, d in tarefas:
+        itens += [d, pausa]
+    lista.write_text("".join(f"file '{x.resolve().as_posix()}'\n" for x in itens[:-1]), encoding="utf-8")
+    subprocess.run([config.ffmpeg(), "-y", "-loglevel", "error", "-f", "concat", "-safe", "0", "-i", str(lista),
+                    "-ar", "48000", "-ac", "2", "-b:a", "192k", str(destino)], check=True)
+    for x in pasta.iterdir():
+        x.unlink()
+    pasta.rmdir()
+    total = duracao_audio(destino)
+    print(f"  {destino} ({int(total // 60)} min {int(total % 60)} s)")
+    return destino

@@ -90,6 +90,14 @@ VOZ_PIPER_ESPANHOL = _env("VOZ_PIPER_ESPANHOL", "piper:es_ES-davefx-medium")
 # tem o fonema nasal e lê "en/on/Chine" errado; não usar.
 VOZ_PIPER_FRANCES = _env("VOZ_PIPER_FRANCES", "piper:fr_FR-tom-medium")
 VOZ = _env("VOZ", "pt-BR-AntonioNeural")
+# Voz de cada canal no lugar do Clipchamp (escolha do dono em 2026-11-19, depois de comparar com os áudios dos canais):
+# Remy Multilingual nos dois, com a velocidade medida nas narrações originais. Comando: rodar voz <canal> <texto.txt>
+VOZES_CANAIS = {
+    "le-disciple": {"voz": "fr-FR-RemyMultilingualNeural", "velocidade": "+8%"},
+    "imperios": {"voz": "fr-FR-RemyMultilingualNeural", "velocidade": "-9%"},
+    # provisória até o dono escolher a voz grave do canal
+    "jogos": {"voz": "pt-BR-AntonioNeural", "velocidade": "+0%"},
+}
 VOZ_VELOCIDADE = _env("VOZ_VELOCIDADE", "+5%")
 
 # Roteiro (padrões do Prompt Mestre; cada um pode ser trocado por opção no comando)
