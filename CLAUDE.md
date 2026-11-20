@@ -112,8 +112,12 @@ Se o canal não for dito, perguntar. Campos "[preencher]": perguntar ao dono, nu
     Nunca trocar de User-Agent para fugir do limite.
   - Flickr pelo Openverse (`source=flickr`) achou boas fotos históricas quando o Wikimedia faltou.
   - Vídeos de banco: Pexels (chave pelo cabeçalho; na nuvem é credencial do ambiente, rodar com
-    `PEXELS_API_KEY=proxy-injected`). Filmes históricos em domínio público: Internet Archive, só das coleções
-    `universal_newsreels` e `prelinger` (nas outras a licença declarada costuma estar errada).
+    `PEXELS_API_KEY=proxy-injected`; em 2026-11-20 ainda dava "Invalid API key": o valor salvo precisa ser só a
+    chave, sem "Bearer"). Vídeos do Commons (cinejornais, arquivo; busca automática nas cenas "stock"): só as
+    versões convertidas (720p etc.), o original dá 429; na nuvem o upload.wikimedia.org ainda pede ~2 min entre
+    arquivos de vídeo (lento, mas a ferramenta espera). Filmes históricos em domínio público: Internet Archive,
+    só das coleções `universal_newsreels` e `prelinger` (nas outras a licença declarada costuma estar errada).
+  - ffmpeg lendo endereço da internet na nuvem: passar `-http_proxy config.PROXY` (ele não lê HTTPS_PROXY).
 - Estilo dos documentários (aprovado em 2026-11-20, referência: canal "O Mundo e Tudo ao Redor"), Impérios e Le
   Disciple: misturado. Fotos e vídeos reais na maior parte; cenas animadas (`automacao/animacao.py`: ilustração
   plana por IA + câmera lenta + partículas) nas cenas abstratas, de ideia, metáfora ou sem foto boa. Faixas pretas de
@@ -121,6 +125,14 @@ Se o canal não for dito, perguntar. Campos "[preencher]": perguntar ao dono, nu
   No roteiro.json: `"canal": "imperios"|"le-disciple"`, cena animada `"visual": "animacao"` + `"prompt_animacao"`
   (inglês) + `"efeito"` (neve, estrelas, poeira, brasas, chuva, nenhum), e `"texto_tela": ["linha pequena",
   "PALAVRA-CHAVE"]` em ~1 cena a cada 1-2 min (datas, nomes, números marcantes). Pessoa real nunca em animação.
+  - Animações: estilo SEMPRE o mesmo (pedido do dono): silhueta recortada em papel, plana, contra fundo com
+    brilho (prefixo e sufixo fixos em `animacao.py`); nos prompts, descrever a cena como silhuetas contra a luz,
+    sem pedir outro estilo. Muda só a paleta, uma por vídeo (`"paleta_animacao"`), escolhida pela psicologia das
+    cores conforme o tom do roteiro: investigacao (vermelho escuro e preto: crime, segredo, conspiração),
+    reflexao (âmbar/ocre neutro: livros, análise, filosofia; padrão do Le Disciple), aprendizado (azul),
+    natureza (verde: temas agradáveis, calma), misterio (índigo/roxo), melancolia (azul-acinzentado: perda, fim de
+    era), epico (dourado e preto: impérios, poder, guerra; padrão do Impérios). Um mapa de cores aplicado por cima
+    deixa todas as cenas no mesmo tom, mesmo quando a IA varia.
 - Música de fundo (`automacao/musica.py`, `rodar musica baixar`): pasta `musicas/<clima>/` (tenso, melancolico,
   sereno, misterio), faixas de Kevin MacLeod (CC BY 4.0, vale fora do YouTube), normalizadas; volume baixo e ainda
   abaixado sob a voz. Clima: `"tom_musica"` no roteiro.json, senão o do canal (`config.MUSICA_CANAIS`);

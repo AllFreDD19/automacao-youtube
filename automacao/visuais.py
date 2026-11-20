@@ -15,7 +15,11 @@ from . import config, relevancia
 
 def _recortar(url, destino, inicio, duracao=20):
     """Baixa só um trecho do vídeo, a partir de `inicio` segundos (o ffmpeg lê direto do endereço)."""
-    r = subprocess.run([config.ffmpeg(), "-y", "-loglevel", "error", "-ss", str(inicio), "-i", url, "-t", str(duracao),
+    # Identificação com contato também no ffmpeg (o Wikimedia recusa o "Lavf" padrão)
+    # Na nuvem o ffmpeg só sai pelo proxy se ele for passado (não lê HTTPS_PROXY)
+    proxy = ["-http_proxy", config.PROXY] if config.PROXY else []
+    r = subprocess.run([config.ffmpeg(), "-y", "-loglevel", "error", "-user_agent", config.USER_AGENT, *proxy,
+                        "-ss", str(inicio), "-i", url, "-t", str(duracao),
                         "-an", "-c:v", "libx264", "-preset", "veryfast", "-crf", "18", str(destino)],
                        capture_output=True, text=True, timeout=300)
     if r.returncode != 0 or not destino.exists() or destino.stat().st_size < 50_000:
@@ -220,6 +224,58 @@ def _cands_wikimedia(busca):
             "tipo": "imagem", "chave": ("wiki", p.get("pageid")), "url": url, "headers": WIKI_HEADERS,
             # A miniatura do Commons troca só a largura no endereço; só tamanhos padrão existem (400px dá erro 400)
             "preview": re.sub(r"/1920px-", "/500px-", url),
+            "credito": {"arquivo": titulo, "autor": _limpar_html(meta.get("Artist", {}).get("value")) or "desconhecido",
+                        "licenca": licenca, "url": info.get("descriptionurl", "")},
+        })
+    return cands[:POR_FONTE]
+
+
+def _cands_wikimedia_videos(busca, duracao_min):
+    """Vídeos livres do Commons (cinejornais antigos, filmes de arquivo, natureza), com crédito pronto.
+
+    Vêm em WebM/OGV: o vencedor é convertido para MP4 (só os primeiros 20 s, a partir de 1 s para pular cartela)."""
+    global _ultima_chamada_wiki
+    with _trava_wiki:
+        espera = 0.5 - (time.time() - _ultima_chamada_wiki)
+        if espera > 0:
+            time.sleep(espera)
+        _ultima_chamada_wiki = time.time()
+    try:
+        for tentativa in range(3):
+            r = requests.get(WIKI_API, headers=WIKI_HEADERS, timeout=30, params={
+                "action": "query", "format": "json", "generator": "search", "gsrnamespace": 6, "gsrlimit": 15,
+                "gsrsearch": f"{busca} filetype:video", "prop": "videoinfo",
+                "viprop": "url|size|extmetadata|metadata|derivatives", "viurlwidth": 640,
+            })
+            if r.status_code != 429:
+                break
+            time.sleep(min(int(r.headers.get("retry-after") or 0) or 15, 60))
+        r.raise_for_status()
+        paginas = sorted(r.json().get("query", {}).get("pages", {}).values(), key=lambda p: p.get("index", 99))
+    except (requests.RequestException, ValueError):
+        return []
+    cands = []
+    for p in paginas:
+        info = (p.get("videoinfo") or [{}])[0]
+        meta = info.get("extmetadata", {})
+        licenca = _limpar_html(meta.get("LicenseShortName", {}).get("value"))
+        # O arquivo original dá 429 (espera de 10 min) para ferramentas; as versões convertidas (720p etc.) não
+        versoes = [d for d in info.get("derivatives") or [] if d.get("transcodekey") and 360 <= (d.get("height") or 0) <= 1080]
+        if not versoes:
+            continue
+        versao = max(versoes, key=lambda d: (d["height"], "vp9" in d.get("transcodekey", "")))
+        duracao = next((m.get("value") for m in info.get("metadata") or [] if m.get("name") == "playtime_seconds"), 0)
+        try:
+            duracao = float(duracao)
+        except (TypeError, ValueError):
+            duracao = 0
+        if (info.get("width", 0) < 480 or duracao < duracao_min + 1 or not info.get("thumburl")
+                or not WIKI_LICENCAS.search(licenca)):
+            continue
+        titulo = p.get("title", "").removeprefix("File:")
+        cands.append({
+            "tipo": "video", "chave": ("wiki_v", p.get("pageid")), "url": (versao["src"], 1), "converter": True,
+            "preview": info["thumburl"], "headers": WIKI_HEADERS,
             "credito": {"arquivo": titulo, "autor": _limpar_html(meta.get("Artist", {}).get("value")) or "desconhecido",
                         "licenca": licenca, "url": info.get("descriptionurl", "")},
         })
@@ -484,6 +540,8 @@ def _candidatos(cena, buscas, quer):
         novos = _cands_nasa(b, quer, _duracao_minima(cena))
         if "video" in quer:
             novos += _cands_pexels_videos(b, _duracao_minima(cena)) + _cands_pixabay_videos(b, _duracao_minima(cena))
+            if b == buscas[0]:  # Commons: só a busca principal (poupa o limite de pedidos do Wikimedia)
+                novos += _cands_wikimedia_videos(cena.get("busca_wiki") or b, _duracao_minima(cena))
         if "imagem" in quer:
             novos += _cands_pixabay_imagens(b)
         pontuados = sorted(pontuados + _pontuar(cena, novos), key=lambda x: -x[0])
@@ -514,7 +572,16 @@ def _baixar_melhor(pontuados, destino_base, usados, diferente_de=None):
         if not url:
             continue
         try:
-            if inicio:
+            if c.get("converter"):
+                # WebM do Commons: baixa com a identificação certa e converte o trecho aqui (o ffmpeg lendo
+                # direto do endereço levava 4xx do Wikimedia)
+                bruto = destino.with_suffix(".webm")
+                try:
+                    _baixar(url, bruto, headers=c.get("headers"))
+                    _recortar(str(bruto), destino, inicio)
+                finally:
+                    bruto.unlink(missing_ok=True)
+            elif inicio:
                 _recortar(url, destino, inicio)
             else:
                 _baixar(url, destino, headers=c.get("headers"))
@@ -629,7 +696,7 @@ def _buscar_visual(cena, pasta, usados):
         from . import animacao
         jpg = base.with_suffix(".jpg")
         arquivo = animacao.gerar_imagem(cena.get("prompt_animacao") or cena.get("prompt_imagem") or busca,
-                                        jpg, semente=cena["id"])
+                                        jpg, semente=cena["id"], paleta=cena.get("paleta"))
         return (arquivo, "animacao") if arquivo else (None, None)
     if config.IMAGEM_PROVEDOR == "pixabay" or cena["visual"] == "stock":
         # Wikimedia (foto exata), Pixabay e Pexels concorrem juntos; cena "stock" prefere vídeo se ele combinar
@@ -657,6 +724,11 @@ def _buscar_visual(cena, pasta, usados):
 def gerar_visuais(roteiro, pasta_projeto, em_paralelo=3):  # Wikimedia pede no máximo 3 pedidos simultâneos
     pasta = pasta_projeto / "visuais"
     pasta.mkdir(exist_ok=True)
+    from . import animacao
+    paleta = animacao.paleta_do_roteiro(roteiro)
+    for c in roteiro["cenas"]:
+        if c.get("visual") == "animacao":
+            c["paleta"] = paleta  # o vídeo inteiro no mesmo tom
 
     def pronta(c):
         return c.get("visual_arquivo") and (pasta_projeto / c["visual_arquivo"]).exists() and not c.get("visual_reaproveitado")

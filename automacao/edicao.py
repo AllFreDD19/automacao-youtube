@@ -52,15 +52,16 @@ def _rodar(args, cwd=None):
         raise RuntimeError(f"ffmpeg falhou: {r.stderr[-1500:]}")
 
 
-def _fundo(visual, tipo, dur, semente, efeito=None):
+def _fundo(visual, tipo, dur, semente, efeito=None, paleta=None):
     """Entrada do FFmpeg e filtro de um visual que ocupa `dur` segundos."""
     ajuste = f"scale={LARGURA}:{ALTURA}:force_original_aspect_ratio=increase,crop={LARGURA}:{ALTURA}"
     if visual and visual.exists() and tipo == "animacao":
         # Ilustração animada (câmera lenta + partículas), guardada ao lado da imagem para reaproveitar
-        efeito = efeito or "poeira"
+        if efeito not in animacao.EFEITOS:
+            efeito = animacao.PALETAS.get(paleta, {}).get("efeito", "poeira")
         animado = visual.with_name(f"{visual.stem}_anim_{efeito}_{dur:.2f}.mp4")
         if not animado.exists() or animado.stat().st_mtime < visual.stat().st_mtime:
-            animacao.renderizar(visual, animado, dur + 0.1, efeito, semente)
+            animacao.renderizar(visual, animado, dur + 0.1, efeito, semente, paleta)
         visual, tipo = animado, "video"
     if visual and visual.exists() and tipo == "video":
         return ["-stream_loop", "-1", "-i", str(visual)], f"{ajuste},fps={FPS},format=yuv420p"
@@ -93,7 +94,7 @@ def _clipe_cena(cena, pasta_projeto, destino, cauda=0.0, faixas=False):
     entradas, grafo = [], []
     for i, ((arquivo, tipo), d) in enumerate(zip(partes, duracoes)):
         entrada, filtro = _fundo(pasta_projeto / arquivo if arquivo else None, tipo, d, cena["id"] + i,
-                                 cena.get("efeito"))
+                                 cena.get("efeito"), cena.get("paleta"))
         entradas += entrada
         grafo.append(f"[{i}:v]{filtro},trim=duration={d:.3f},setpts=PTS-STARTPTS,settb=AVTB[p{i}]")
     if len(partes) > 1:

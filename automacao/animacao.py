@@ -7,7 +7,9 @@ cai/sobe em velocidades diferentes, dando profundidade. Tudo em Python + FFmpeg,
 No roteiro.json, uma cena vira animação com:
     "visual": "animacao",
     "prompt_animacao": "lone man silhouette on a beach looking at a huge full moon",  (em inglês, sem texto)
-    "efeito": "estrelas"          (neve | estrelas | poeira | brasas | chuva | nenhum; padrão: poeira)
+    "efeito": "estrelas"          (neve | estrelas | poeira | brasas | chuva | nenhum; padrão: o da paleta)
+Paleta (uma por vídeo, para todas as cenas animadas ficarem no mesmo tom): "paleta_animacao" no roteiro.json
+(investigacao, reflexao, aprendizado, natureza, misterio, melancolia, epico); sem ela, a do canal.
 Use nas cenas abstratas, de ideia, metáfora ou sem foto boa; pessoas e lugares reais continuam em foto/vídeo.
 
 Texto na tela (vale para qualquer cena, foto, vídeo ou animação): "texto_tela": ["antes da", "luz elétrica"]
@@ -27,19 +29,70 @@ from . import config
 
 LARGURA, ALTURA, FPS = 1920, 1080, 30
 FAIXA_CINEMA = round((ALTURA - LARGURA / 2.39) / 2)  # 138 px: faixas pretas de cinema (2,39:1)
-ESTILO = (", minimalist flat vector illustration, simple shapes and silhouettes, deep navy blue night palette, "
-          "soft glow, cinematic composition, muted colors, no text, no letters, no watermark")
+# Estilo FIXO de todas as animações (pedido do dono: mesmo traço em qualquer cenário); só a paleta muda com o tom
+ESTILO = (", minimalist flat vector illustration, simple geometric shapes and clean silhouettes, subtle paper grain, "
+          "soft volumetric glow, limited color palette of {cores}, cinematic wide composition, "
+          "no text, no letters, no watermark")
+
+# Paletas pela psicologia das cores. "sombra/meio/luz" = mapa de cores aplicado por cima da imagem gerada (55%):
+# a IA varia o colorido de uma imagem para outra; o mapa deixa o vídeo inteiro no mesmo tom.
+PALETAS = {
+    # crime, conspiração, segredo, investigação: vermelho escuro e preto (perigo, alerta, tensão)
+    "investigacao": {"cores": "deep crimson red and near-black shadows", "sombra": (8, 4, 6), "meio": (92, 14, 22),
+                     "luz": (236, 190, 170), "efeito": "poeira"},
+    # livros, análise, filosofia (Le Disciple): âmbar e ocre neutros (sabedoria, calor, atenção calma)
+    "reflexao": {"cores": "warm amber, muted ochre yellow and dark brown", "sombra": (22, 15, 8),
+                 "meio": (150, 104, 40), "luz": (250, 228, 180), "efeito": "poeira"},
+    # aprendizado, ciência, explicação: azul (confiança, clareza, foco)
+    "aprendizado": {"cores": "deep navy blue and soft cyan", "sombra": (5, 10, 26), "meio": (34, 74, 140),
+                    "luz": (210, 232, 255), "efeito": "estrelas"},
+    # temas agradáveis, natureza, saúde, equilíbrio: verde (calma, crescimento)
+    "natureza": {"cores": "deep forest green and soft mint", "sombra": (6, 18, 12), "meio": (40, 110, 70),
+                 "luz": (215, 245, 220), "efeito": "poeira"},
+    # mistérios, enigmas, o desconhecido: índigo e roxo (mistério, imaginação)
+    "misterio": {"cores": "deep indigo and muted violet", "sombra": (10, 6, 24), "meio": (70, 44, 130),
+                 "luz": (225, 210, 255), "efeito": "estrelas"},
+    # perda, fim de uma era, despedida: azul-acinzentado sem saturação (tristeza, nostalgia)
+    "melancolia": {"cores": "desaturated slate blue and cold grey", "sombra": (12, 14, 18), "meio": (78, 90, 108),
+                   "luz": (220, 226, 232), "efeito": "neve"},
+    # impérios, poder, guerra, grandeza: dourado e preto (poder, riqueza, drama)
+    "epico": {"cores": "burnished gold, bronze and deep black", "sombra": (8, 6, 4), "meio": (120, 82, 30),
+              "luz": (255, 222, 150), "efeito": "brasas"},
+}
+PREFIXO = ("Minimalist flat 2D vector illustration, paper-cut silhouette art: dark flat foreground silhouettes "
+           "against a softly glowing gradient background, backlit, no realistic details: ")
+PALETAS_CANAIS = {"imperios": "epico", "le-disciple": "reflexao"}  # quando o roteiro não escolhe
+MISTURA_PALETA = 0.55
+
+
+def paleta_do_roteiro(roteiro):
+    """Paleta única do vídeo (todas as cenas animadas iguais): "paleta_animacao" do roteiro ou a do canal."""
+    nome = roteiro.get("paleta_animacao") or PALETAS_CANAIS.get(roteiro.get("canal", ""), "aprendizado")
+    return nome if nome in PALETAS else "aprendizado"
+
+
+def aplicar_paleta(im, nome):
+    from PIL import ImageOps
+    p = PALETAS[nome]
+    cinza = ImageOps.autocontrast(im.convert("L"), cutoff=1)
+    mapa = ImageOps.colorize(cinza, black=p["sombra"], mid=p["meio"], white=p["luz"])
+    final = Image.blend(im, mapa, MISTURA_PALETA)
+    # Vinheta suave: bordas escuras em todas as cenas, para o vídeo parecer uma coisa só
+    vinheta = Image.radial_gradient("L").resize(im.size).point(lambda v: int(255 - max(0, v - 90) * 0.9))
+    return Image.composite(final, Image.new("RGB", im.size, p["sombra"]), vinheta)
 EFEITOS = ("neve", "estrelas", "poeira", "brasas", "chuva", "nenhum")
 ZOOM_FINAL = 1.07  # aproximação total ao longo da cena (lenta: não chama atenção, só dá vida)
 
 
-def gerar_imagem(prompt, destino, semente):
+def gerar_imagem(prompt, destino, semente, paleta="aprendizado"):
     """Ilustração plana 16:9. FLUX da NVIDIA se escolhido no .env; senão Pollinations (grátis, sem chave).
 
     Pollinations devolve 1024x576 com marca d'água no canto inferior direito: corta 9% de baixo e amplia (no estilo
     plano a ampliação não aparece)."""
     from . import visuais
-    texto = prompt + ESTILO
+    paleta = paleta if paleta in PALETAS else "aprendizado"
+    # O estilo vem ANTES da cena: no fim do texto a IA às vezes ignorava e fazia foto realista (biblioteca clara)
+    texto = PREFIXO + prompt + ESTILO.format(cores=PALETAS[paleta]["cores"])
     bruto = None
     if config.NVIDIA_API_KEY and config.IMAGEM_PROVEDOR == "nvidia":
         try:
@@ -67,7 +120,7 @@ def gerar_imagem(prompt, destino, semente):
     r = max(LARGURA / im.width, ALTURA / im.height)
     im = im.resize((math.ceil(im.width * r), math.ceil(im.height * r)), Image.LANCZOS)
     x, y = (im.width - LARGURA) // 2, (im.height - ALTURA) // 2
-    im.crop((x, y, x + LARGURA, y + ALTURA)).save(destino, quality=93)
+    aplicar_paleta(im.crop((x, y, x + LARGURA, y + ALTURA)), paleta).save(destino, quality=93)
     return destino
 
 
@@ -82,7 +135,7 @@ def _particulas(efeito, rnd):
     return ps
 
 
-def _desenhar(d, efeito, ps, q):
+def _desenhar(d, efeito, ps, q, cor_luz=(255, 236, 200)):
     for p in ps:
         x, y, tam, vel, fase = p
         if efeito == "neve":
@@ -99,7 +152,7 @@ def _desenhar(d, efeito, ps, q):
             p[1] = (y - vel * 0.25 / FPS) % ALTURA
             p[0] = (x + vel * 0.35 / FPS + math.sin(q / 60 + fase) * 0.3) % LARGURA
             alfa = int(28 * tam * (0.6 + 0.4 * math.sin(q / 30 + fase)))
-            d.ellipse((p[0], p[1], p[0] + tam * 1.4, p[1] + tam * 1.4), fill=(255, 236, 200, alfa))
+            d.ellipse((p[0], p[1], p[0] + tam * 1.4, p[1] + tam * 1.4), fill=(*cor_luz, alfa))
         elif efeito == "brasas":
             p[1] = (y - vel * 0.9 / FPS) % ALTURA
             p[0] = (x + math.sin(q / 25 + fase) * 0.8) % LARGURA
@@ -111,9 +164,11 @@ def _desenhar(d, efeito, ps, q):
             d.line((p[0], p[1], p[0] - tam * 2, p[1] - tam * 9), fill=(200, 215, 255, int(30 * tam)), width=1)
 
 
-def renderizar(imagem, destino, duracao, efeito="poeira", semente=0):
+def renderizar(imagem, destino, duracao, efeito="poeira", semente=0, paleta=None):
     """Vídeo mudo de `duracao` s a partir da ilustração (sem faixas nem texto: entram na edição)."""
-    efeito = efeito if efeito in EFEITOS else "poeira"
+    if efeito not in EFEITOS:
+        efeito = PALETAS[paleta]["efeito"] if paleta in PALETAS else "poeira"
+    cor_luz = PALETAS[paleta]["luz"] if paleta in PALETAS else (255, 236, 200)
     rnd = random.Random(semente)
     base = Image.open(imagem).convert("RGB")
     margem = ZOOM_FINAL + 0.04  # folga para o deslize lateral
@@ -138,7 +193,7 @@ def renderizar(imagem, destino, duracao, efeito="poeira", semente=0):
             quadro = base.crop(caixa).resize((LARGURA, ALTURA), Image.BILINEAR)
             if ps:
                 cam = Image.new("RGBA", (LARGURA, ALTURA))
-                _desenhar(ImageDraw.Draw(cam), efeito, ps, q)
+                _desenhar(ImageDraw.Draw(cam), efeito, ps, q, cor_luz)
                 quadro = Image.alpha_composite(quadro.convert("RGBA"), cam).convert("RGB")
             ff.stdin.write(quadro.tobytes())
     finally:
