@@ -133,6 +133,15 @@ Só lives suas (ou com autorização escrita do criador). Twitch e Kick funciona
   transcreve só eles e gera `momentos.md` com quadro e fala de cada um, já com a linha pronta para o campo
   `"curtos"` do `roteiro_jogo.json`. Depois: `.\rodar.bat jogo curtos <projeto>`.
 
+### Liberar espaço no notebook (HD externo)
+
+Com o HD conectado, na pasta do projeto:
+`powershell -ExecutionPolicy Bypass -File ferramentas\organizar_hd.ps1`. Ele lista o que ocupa mais espaço
+(Downloads, Área de Trabalho, Documentos, Vídeos, Imagens, Músicas, os projetos prontos e os .zip), você digita os
+números do que vai para o HD e confirma. Nada é apagado: vai para `<HD>:\Arquivo-Notebook\` com o mesmo caminho,
+e fica anotado em `movidos.csv`. Para trazer tudo de volta: o mesmo comando com `-Desfazer`. Nunca mexe em
+programas, AppData, OneDrive, no código da ferramenta, no `.venv` nem no `.env`.
+
 ### Voz dos canais
 
 `.\rodar.bat voz <canal> <texto.txt>` usa a voz de `VOZES_CANAIS` (`config.py`). Para testar outras:
