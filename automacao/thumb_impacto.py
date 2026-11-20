@@ -213,7 +213,8 @@ def objeto(destino, cenario, coisa, linhas, semente=1, cores=None, caixa=None):
     """Objeto-símbolo grande à direita (com brilho), cenário atrás, texto à esquerda."""
     tela = fundo(ia(cenario, semente=semente), desfoque=4).convert("RGBA")
     suj = recortar(ia(coisa, 1024, 1024, semente=semente + 3, verde=True))
-    altura = int(A * 0.82)
+    # Objeto largo (canhão, navio) não pode passar de ~metade da thumb, senão cobre o texto
+    altura = min(int(A * 0.82), int(L * 0.5 * suj.height / suj.width))
     colar_com_contorno(tela, suj, L - int(suj.width * altura / suj.height) - 40, (A - altura) // 2, altura,
                        cor=AMARELO, brilho=(255, 120, 0))
     texto_grande(tela, linhas, 50, 120, int(L * 0.52), cores=cores, caixa_ultima=caixa)
