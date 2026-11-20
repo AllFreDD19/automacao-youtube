@@ -14,3 +14,4 @@ soundfile==0.14.0
 # Transcrição da narração gravada (vídeos de história e documentário com a voz do dono do canal)
 faster-whisper==1.2.1
 yt-dlp==2026.10.26
+rembg[cpu]==2.0.87

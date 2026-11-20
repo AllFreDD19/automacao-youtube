@@ -149,8 +149,13 @@ Se o canal não for dito, perguntar. Campos "[preencher]": perguntar ao dono, nu
 - Ritmo: uma frase por cena (~8 s); fala > 9 s ganha segundo visual na metade. Meta de 50% das cenas em vídeo
   (é meta: imagem certa vale mais que vídeo sem relação).
 - Edição: transições por xfade (fusão entre cenas; zoom/flash na virada de seção), só na imagem: o áudio fica intacto.
-- Thumbnail (`.\rodar.bat thumb <projeto>`, `automacao/thumb_ia.py`): estilo "cinema" (cena realista do FLUX da
-  NVIDIA + 2 linhas grandes em Impact). Se o FLUX estiver fora do ar, montar com foto real do Wikimedia.
+- Thumbnail: padrão desde 2026-11-20 é o estilo "impacto" (`automacao/thumb_impacto.py`, referências do dono:
+  MrBeast e GameplayRJ): um foco gigante recortado (rembg) com contorno claro e brilho, fundo do tema saturado e
+  desfocado com vinheta, 1 a 3 palavras enormes com contorno preto que NÃO repetem o título, amarelo/branco/azul
+  (sem o vermelho/branco do YouTube), legível na prévia de celular (`*_celular.png`). Sempre 3 conceitos
+  diferentes para o Testar e comparar do YouTube: `rosto` (personagem GENÉRICO expressivo, nunca pessoa real),
+  `objeto` (símbolo do tema) e `antes_depois`. Conceitos em `projetos/<pasta>/conceitos_thumb.json`. O estilo
+  antigo "cinema" (`thumb_ia.py`) continua disponível.
 - Vídeo de HISTÓRIA com a voz gravada pelo dono: fundo contínuo de paisagens de drone + legenda palavra a palavra
   (`python -m automacao.historia projetos\<pasta> campo castelo floresta montanha`; antes, uma vez:
   `python -m automacao.paisagens restaurar` para baixar os clipes). Documentário com a voz do dono:
