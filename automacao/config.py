@@ -106,8 +106,18 @@ CAPITULOS = int(_env("CAPITULOS", "4"))
 CARACTERES = int(_env("CARACTERES", "11000"))  # ≈ 15 min; 22000 ≈ 30 min (vídeos do canal: 15 ou 30 min)
 META_CANAL = _env("META_CANAL")
 
+# Identificação nos pedidos a serviços públicos (Wikimedia, Openverse, Internet Archive). A regra do Wikimedia
+# (2026) trata pedido sem contato como "não identificado": 10 por minuto, dividido com todo mundo do mesmo servidor
+# (na nuvem dava 429 o tempo todo). Com contato (aqui o link público do repositório, aprovado pelo dono): 200/min.
+USER_AGENT = "AutomacaoYoutube/1.1 (https://github.com/AllFreDD19/automacao-youtube) python-requests"
+
 # Vídeo
+# Música de fundo baixa (0,10 ≈ -20 dB) e ainda abaixada sob a voz (ducking): só preenche os silêncios.
 MUSICA_VOLUME = float(_env("MUSICA_VOLUME", "0.10"))
+# Clima da música padrão de cada canal (pasta musicas/<clima>/); o roteiro.json pode trocar com "tom_musica"
+MUSICA_CANAIS = {"imperios": "tenso", "le-disciple": "sereno"}
+# Canais com faixas pretas de cinema (2,39:1) e texto no canto (estilo motion design aprovado em 2026-11-20)
+CINEMA_CANAIS = {"imperios", "le-disciple"}
 LEGENDAS = _env("LEGENDAS", "sim").lower() in ("sim", "s", "true", "1")
 # Desligado por padrão desde 2026-10 (decisão do usuário); o código fica para quem quiser ligar com APRESENTADOR=sim
 APRESENTADOR = _env("APRESENTADOR", "nao").lower() in ("sim", "s", "true", "1")

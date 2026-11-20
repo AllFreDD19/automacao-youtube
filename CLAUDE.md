@@ -40,7 +40,8 @@ Se o canal não for dito, perguntar. Campos "[preencher]": perguntar ao dono, nu
 - Tema: ascensão e queda de impérios e civilizações, guerras, mistérios da história, documentários cinematográficos
   (nicho D do Prompt Mestre: documentário narrativo real, não inventar fatos, datas, números nem citações).
 - Idioma: espanhol. Voz: Remy Multilingual (-9%) pela ferramenta: `rodar voz imperios <texto.txt>`
-  (substitui o Clipchamp desde 2026-11-19; aprovada pelo dono). Sem música por baixo da narração.
+  (substitui o Clipchamp desde 2026-11-19; aprovada pelo dono). Música de fundo baixa no clima "tenso" (pedido do
+  dono em 2026-11-20; até então era sem música); o vídeo da URSS ficou como está.
 - Formato: Prompt Mestre completo (4 capítulos, 3 CTAs).
 - Tamanho: vídeos de 15 ou 30 minutos (ver "Tamanho dos roteiros"). Meta: 1.000 inscritos; 1 a 2 vídeos por dia.
 
@@ -106,6 +107,25 @@ Se o canal não for dito, perguntar. Campos "[preencher]": perguntar ao dono, nu
 - Visuais: Wikimedia (foto exata, campo `busca_wiki`), Pixabay, Pexels, NASA, Openverse e Unsplash concorrem; o CLIP
   (`automacao/relevancia.py`) dá nota a cada candidato e escolhe o melhor. Créditos vão sozinhos para a descrição
   (não apagar ao publicar: a licença exige).
+  - Wikimedia: só responde com contato no User-Agent (`config.USER_AGENT`, link do repositório, aprovado pelo dono);
+    sem contato a nuvem levava 429 o tempo todo. No máximo 3 pedidos ao mesmo tempo; respeitar o Retry-After.
+    Nunca trocar de User-Agent para fugir do limite.
+  - Flickr pelo Openverse (`source=flickr`) achou boas fotos históricas quando o Wikimedia faltou.
+  - Vídeos de banco: Pexels (chave pelo cabeçalho; na nuvem é credencial do ambiente, rodar com
+    `PEXELS_API_KEY=proxy-injected`). Filmes históricos em domínio público: Internet Archive, só das coleções
+    `universal_newsreels` e `prelinger` (nas outras a licença declarada costuma estar errada).
+- Estilo dos documentários (aprovado em 2026-11-20, referência: canal "O Mundo e Tudo ao Redor"), Impérios e Le
+  Disciple: misturado. Fotos e vídeos reais na maior parte; cenas animadas (`automacao/animacao.py`: ilustração
+  plana por IA + câmera lenta + partículas) nas cenas abstratas, de ideia, metáfora ou sem foto boa. Faixas pretas de
+  cinema no vídeo todo (legenda dentro da faixa de baixo) e texto no canto inferior esquerdo nos momentos-chave.
+  No roteiro.json: `"canal": "imperios"|"le-disciple"`, cena animada `"visual": "animacao"` + `"prompt_animacao"`
+  (inglês) + `"efeito"` (neve, estrelas, poeira, brasas, chuva, nenhum), e `"texto_tela": ["linha pequena",
+  "PALAVRA-CHAVE"]` em ~1 cena a cada 1-2 min (datas, nomes, números marcantes). Pessoa real nunca em animação.
+- Música de fundo (`automacao/musica.py`, `rodar musica baixar`): pasta `musicas/<clima>/` (tenso, melancolico,
+  sereno, misterio), faixas de Kevin MacLeod (CC BY 4.0, vale fora do YouTube), normalizadas; volume baixo e ainda
+  abaixado sob a voz. Clima: `"tom_musica"` no roteiro.json, senão o do canal (`config.MUSICA_CANAIS`);
+  `"nenhuma"` desliga. Créditos entram na descrição sozinhos. Climas montados pelo nome das faixas, sem ouvir:
+  o dono pode trocar.
 - Ritmo: uma frase por cena (~8 s); fala > 9 s ganha segundo visual na metade. Meta de 50% das cenas em vídeo
   (é meta: imagem certa vale mais que vídeo sem relação).
 - Edição: transições por xfade (fusão entre cenas; zoom/flash na virada de seção), só na imagem: o áudio fica intacto.

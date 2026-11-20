@@ -24,7 +24,15 @@ def _recortar(url, destino, inicio, duracao=20):
 
 
 def _baixar(url, destino, timeout=180, headers=None):
-    with requests.get(url, stream=True, timeout=timeout, headers=headers) as r:
+    for tentativa in range(4):
+        r = requests.get(url, stream=True, timeout=timeout, headers=headers)
+        if r.status_code != 429 or tentativa == 3:
+            break
+        # Limite de pedidos (Wikimedia): espera o que o servidor pede, sem insistir antes
+        espera = min(int(r.headers.get("retry-after") or 0) or 20 * (tentativa + 1), 120)
+        r.close()
+        time.sleep(espera)
+    with r:
         r.raise_for_status()
         with open(destino, "wb") as f:
             for parte in r.iter_content(1 << 16):
@@ -156,10 +164,9 @@ def imagem_pixabay(busca, destino, usados):
 # Wikimedia Commons: fotos do modelo exato (ex.: "Saab 900"), grátis e sem chave, com licença livre que exige crédito.
 # A API pede um User-Agent que identifique a ferramenta.
 WIKI_API = "https://commons.wikimedia.org/w/api.php"
-# Desde 16/10/2026 o Wikimedia dá 403 para identificações sem endereço de contato (achado na Fábrica de Vídeos do
-# usuário; aqui aparecia como miniaturas que vinham vazias/inválidas)
-WIKI_HEADERS = {"User-Agent": "AutomacaoYoutube/1.0 (https://commons.wikimedia.org/wiki/Commons:API; "
-                              "personal local video tool)"}
+# Desde 16/10/2026 o Wikimedia dá 403/429 para identificações sem endereço de contato do dono da ferramenta
+# (o link antigo, para a página da API, não contava): ver config.USER_AGENT
+WIKI_HEADERS = {"User-Agent": config.USER_AGENT}
 # Só licenças que permitem uso comercial e edição; NC/ND ficam de fora
 WIKI_LICENCAS = re.compile(r"^(cc0|public domain|pd\b|cc[ -]by(-sa)?( \d\.\d)?)", re.I)
 _trava_wiki = threading.Lock()
@@ -179,11 +186,15 @@ def _cands_wikimedia(busca):
             time.sleep(espera)
         _ultima_chamada_wiki = time.time()
     try:
-        r = requests.get(WIKI_API, headers=WIKI_HEADERS, timeout=30, params={
-            "action": "query", "format": "json", "generator": "search", "gsrnamespace": 6, "gsrlimit": 20,
-            "gsrsearch": f"{busca} filetype:bitmap", "prop": "imageinfo",
-            "iiprop": "url|size|extmetadata", "iiurlwidth": 1920,
-        })
+        for tentativa in range(3):
+            r = requests.get(WIKI_API, headers=WIKI_HEADERS, timeout=30, params={
+                "action": "query", "format": "json", "generator": "search", "gsrnamespace": 6, "gsrlimit": 20,
+                "gsrsearch": f"{busca} filetype:bitmap", "prop": "imageinfo",
+                "iiprop": "url|size|extmetadata", "iiurlwidth": 1920,
+            })
+            if r.status_code != 429:
+                break
+            time.sleep(min(int(r.headers.get("retry-after") or 0) or 15, 60))
         r.raise_for_status()
         paginas = sorted(r.json().get("query", {}).get("pages", {}).values(), key=lambda p: p.get("index", 99))
     except (requests.RequestException, ValueError):
@@ -524,7 +535,8 @@ def _equilibrar_videos(roteiro, pasta, usados, em_paralelo):
     videos = sum(1 for c in cenas if c.get("visual_tipo") == "video")
     if videos >= meta:
         return
-    trocaveis = [c for c in cenas if c.get("visual_tipo") != "video" and not c.get("credito")]
+    # Animações (estilo motion design) foram escolhidas de propósito: não viram vídeo de banco
+    trocaveis = [c for c in cenas if c.get("visual_tipo") not in ("video", "animacao") and not c.get("credito")]
     # Primeiro as cenas cuja anterior também é imagem: assim os vídeos ficam espalhados pelo vídeo todo
     por_id = {c["id"]: c for c in cenas}
     def anterior_imagem(c):
@@ -572,6 +584,7 @@ def _equilibrar_videos(roteiro, pasta, usados, em_paralelo):
 def _segundos_visuais(roteiro, pasta, usados, em_paralelo):
     """Falas longas (mais de SEGUNDO_VISUAL_ACIMA_DE segundos) ganham um segundo visual, mostrado na metade."""
     longas = [c for c in roteiro["cenas"] if c.get("duracao", 0) > SEGUNDO_VISUAL_ACIMA_DE
+              and c.get("visual_tipo") != "animacao"  # a animação já se move a fala inteira
               and not (c.get("visual_extra") and (pasta.parent / c["visual_extra"]).exists())]
     if not longas:
         return
@@ -611,6 +624,13 @@ def _buscar_visual(cena, pasta, usados):
 
     cena.pop("credito", None)
     cena.pop("nota", None)
+    if cena["visual"] == "animacao":
+        # Ilustração plana para animar na edição (automacao/animacao.py); sem crédito: gerada por IA
+        from . import animacao
+        jpg = base.with_suffix(".jpg")
+        arquivo = animacao.gerar_imagem(cena.get("prompt_animacao") or cena.get("prompt_imagem") or busca,
+                                        jpg, semente=cena["id"])
+        return (arquivo, "animacao") if arquivo else (None, None)
     if config.IMAGEM_PROVEDOR == "pixabay" or cena["visual"] == "stock":
         # Wikimedia (foto exata), Pixabay e Pexels concorrem juntos; cena "stock" prefere vídeo se ele combinar
         # quase tão bem quanto a melhor imagem
@@ -634,7 +654,7 @@ def _buscar_visual(cena, pasta, usados):
     return (arquivo, "imagem") if arquivo else (None, None)
 
 
-def gerar_visuais(roteiro, pasta_projeto, em_paralelo=4):
+def gerar_visuais(roteiro, pasta_projeto, em_paralelo=3):  # Wikimedia pede no máximo 3 pedidos simultâneos
     pasta = pasta_projeto / "visuais"
     pasta.mkdir(exist_ok=True)
 

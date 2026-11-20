@@ -100,6 +100,22 @@ sugerida do vídeo. O pedido de inscrição fica logo depois da abertura.
 Outras opções:
 - `.\rodar.bat vozes` lista as vozes; use `--voz pt-BR-FranciscaNeural` no `narrar`
 
+### Estilo dos documentários, animações e música (desde 2026-11-20)
+
+- **Cenas animadas** no estilo motion design (ilustração plana em azul-noite, câmera lenta e partículas): no
+  `roteiro.json`, a cena recebe `"visual": "animacao"`, `"prompt_animacao": "<cena em inglês, sem texto>"` e
+  `"efeito"` (`neve`, `estrelas`, `poeira`, `brasas`, `chuva` ou `nenhum`). O `visuais` gera a ilustração e o
+  `editar` anima. Use em ideias, metáforas e cenas sem foto boa; pessoas e lugares reais ficam em foto/vídeo.
+- **Texto na tela**: `"texto_tela": ["antes da", "luz elétrica"]` em qualquer cena (canto inferior esquerdo).
+- **Faixas de cinema**: ligadas nos canais de `CINEMA_CANAIS` (`config.py`) pelo campo `"canal"` do roteiro, ou
+  por vídeo com `"faixas_cinema": true/false`. A legenda passa para dentro da faixa de baixo.
+- **Música de fundo**: `.\rodar.bat musica baixar` (uma vez) monta `musicas\tenso`, `melancolico`, `sereno` e
+  `misterio` com faixas grátis de Kevin MacLeod (CC BY 4.0). O clima vem de `"tom_musica"` no roteiro ou do canal
+  (`MUSICA_CANAIS`); `"tom_musica": "nenhuma"` desliga. Para pôr outras músicas, coloque o `.mp3` na pasta do
+  clima com um `.txt` de mesmo nome contendo o crédito exigido pela licença. `.\rodar.bat musica listar` mostra
+  o que há. Volume: `MUSICA_VOLUME` no `.env` (padrão 0.10; a música ainda abaixa sozinha sob a voz).
+- **Vídeos de banco**: Pexels (chave `PEXELS_API_KEY`). Wikimedia exige contato na identificação: já configurado.
+
 ### Apresentador de IA (desligado)
 
 Um rosto fictício gerado por IA falava numa janela redonda na abertura e nos pedidos de inscrição (SadTalker,

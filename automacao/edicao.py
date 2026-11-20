@@ -7,7 +7,7 @@ import subprocess
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from functools import lru_cache
 
-from . import apresentador, config
+from . import animacao, apresentador, config, musica
 
 LARGURA, ALTURA, FPS = 1920, 1080, 30
 PAUSA = 0.35  # respiro entre cenas, em segundos
@@ -52,9 +52,16 @@ def _rodar(args, cwd=None):
         raise RuntimeError(f"ffmpeg falhou: {r.stderr[-1500:]}")
 
 
-def _fundo(visual, tipo, dur, semente):
+def _fundo(visual, tipo, dur, semente, efeito=None):
     """Entrada do FFmpeg e filtro de um visual que ocupa `dur` segundos."""
     ajuste = f"scale={LARGURA}:{ALTURA}:force_original_aspect_ratio=increase,crop={LARGURA}:{ALTURA}"
+    if visual and visual.exists() and tipo == "animacao":
+        # Ilustração animada (câmera lenta + partículas), guardada ao lado da imagem para reaproveitar
+        efeito = efeito or "poeira"
+        animado = visual.with_name(f"{visual.stem}_anim_{efeito}_{dur:.2f}.mp4")
+        if not animado.exists() or animado.stat().st_mtime < visual.stat().st_mtime:
+            animacao.renderizar(visual, animado, dur + 0.1, efeito, semente)
+        visual, tipo = animado, "video"
     if visual and visual.exists() and tipo == "video":
         return ["-stream_loop", "-1", "-i", str(visual)], f"{ajuste},fps={FPS},format=yuv420p"
     if visual and visual.exists():
@@ -68,7 +75,7 @@ def _fundo(visual, tipo, dur, semente):
     return ["-f", "lavfi", "-i", f"color=c=0x101018:s={LARGURA}x{ALTURA}:r={FPS}"], "format=yuv420p"
 
 
-def _clipe_cena(cena, pasta_projeto, destino, cauda=0.0):
+def _clipe_cena(cena, pasta_projeto, destino, cauda=0.0, faixas=False):
     """Renderiza a cena. `cauda` = segundos extras de imagem no fim (com áudio em silêncio), consumidos pela
     transição com a cena seguinte."""
     dur = cena["duracao"] + PAUSA + cauda
@@ -85,7 +92,8 @@ def _clipe_cena(cena, pasta_projeto, destino, cauda=0.0):
 
     entradas, grafo = [], []
     for i, ((arquivo, tipo), d) in enumerate(zip(partes, duracoes)):
-        entrada, filtro = _fundo(pasta_projeto / arquivo if arquivo else None, tipo, d, cena["id"] + i)
+        entrada, filtro = _fundo(pasta_projeto / arquivo if arquivo else None, tipo, d, cena["id"] + i,
+                                 cena.get("efeito"))
         entradas += entrada
         grafo.append(f"[{i}:v]{filtro},trim=duration={d:.3f},setpts=PTS-STARTPTS,settb=AVTB[p{i}]")
     if len(partes) > 1:
@@ -111,6 +119,17 @@ def _clipe_cena(cena, pasta_projeto, destino, cauda=0.0):
                   f"[v1][{ia + 3}:v]overlay={x - 8}:{y - 8},format=yuv420p[v]"]
     else:
         grafo.append("[fundo]format=yuv420p[v]")
+
+    if cena.get("texto_tela"):
+        # Texto no canto inferior esquerdo (estilo da referência), com fade de entrada e saída
+        png = destino.with_name(f"{destino.stem}_texto.png")
+        animacao.texto_png(cena["texto_tela"], png, faixas=faixas)
+        idx = sum(1 for a in entradas if a == "-i")
+        entradas += ["-loop", "1", "-i", str(png)]
+        sai = max(dur - 0.8, 1.2)
+        grafo[-1] = grafo[-1].replace("[v]", "[vt]")
+        grafo.append(f"[{idx}:v]format=rgba,fade=t=in:st=0.5:d=0.7:alpha=1,fade=t=out:st={sai:.2f}:d=0.6:alpha=1[txt]")
+        grafo.append("[vt][txt]overlay=0:0:shortest=1,format=yuv420p[v]")
 
     _rodar([*entradas, "-t", f"{dur:.3f}", "-filter_complex", ";".join(grafo), "-af", "apad",
             "-map", "[v]", "-map", f"{ia}:a", *_codec_video(), *CODEC_AUDIO, str(destino)])
@@ -197,14 +216,21 @@ def capitulos(roteiro):
     return linhas
 
 
-def _escolher_musica():
-    musicas = [p for p in config.PASTA_MUSICAS.glob("*") if p.suffix.lower() in (".mp3", ".wav", ".m4a", ".ogg")]
-    return random.choice(musicas) if musicas else None
+def _assinatura(cena, cauda, faixas):
+    """O que, além dos arquivos, muda o clipe da cena: se mudar, a cena é refeita."""
+    return json.dumps([cauda, cena.get("texto_tela"), cena.get("efeito"), faixas], ensure_ascii=False)
+
+
+def _faixas_cinema(roteiro):
+    """Faixas pretas de cinema (2,39:1) no vídeo todo: campo "faixas_cinema" do roteiro; sem ele, as dos canais
+    em config.CINEMA_CANAIS (decisão do dono em 2026-11-20, estilo da referência)."""
+    return roteiro.get("faixas_cinema", roteiro.get("canal") in config.CINEMA_CANAIS)
 
 
 def editar(roteiro, pasta_projeto, nome_saida="video_final.mp4"):
     pasta_cenas = pasta_projeto / "cenas"
     pasta_cenas.mkdir(exist_ok=True)
+    faixas = _faixas_cinema(roteiro)
 
     # Cenas de encoders diferentes não podem ser juntadas sem recodificar: se o encoder mudou, refaz todas
     marcador = pasta_cenas / ".encoder"
@@ -230,21 +256,22 @@ def editar(roteiro, pasta_projeto, nome_saida="video_final.mp4"):
             fontes.append(pasta_projeto / cena["apresentador_video"])
         desatualizado = destino.exists() and any(f.stat().st_mtime > destino.stat().st_mtime for f in fontes)
         if (refazer_todas or not destino.exists() or desatualizado
-                or caudas_antes.get(str(cena["id"])) != cauda):
+                or caudas_antes.get(str(cena["id"])) != _assinatura(cena, cauda, faixas)):
             pendentes.append((cena, destino, cauda))
         itens.append({"arquivo": destino, "d": cena["duracao"] + PAUSA, "cauda": cauda, "transicao": tipo})
 
     if pendentes:
         print(f"  renderizando {len(pendentes)} cena(s), {CENAS_EM_PARALELO} por vez ({encoder})...")
         with ThreadPoolExecutor(CENAS_EM_PARALELO) as pool:
-            futuros = [pool.submit(_clipe_cena, cena, pasta_projeto, destino, cauda)
+            futuros = [pool.submit(_clipe_cena, cena, pasta_projeto, destino, cauda, faixas)
                        for cena, destino, cauda in pendentes]
             for feitos, futuro in enumerate(as_completed(futuros), 1):
                 futuro.result()
                 if feitos % 20 == 0 or feitos == len(futuros):
                     print(f"    {feitos}/{len(futuros)}")
         marcador.write_text(encoder)
-        arquivo_caudas.write_text(json.dumps({str(c["id"]): t[0] for c, t in zip(roteiro["cenas"], transicoes)}),
+        arquivo_caudas.write_text(json.dumps({str(c["id"]): _assinatura(c, t[0], faixas)
+                                              for c, t in zip(roteiro["cenas"], transicoes)}),
                                   encoding="utf-8")
 
     # Junta em grupos de ~raiz(n) cenas e depois os grupos: só duas recodificações, qualquer que seja o tamanho
@@ -262,22 +289,30 @@ def editar(roteiro, pasta_projeto, nome_saida="video_final.mp4"):
         g.unlink()
 
     gerar_legendas(roteiro, pasta_projeto / "legendas.srt")
-    musica = _escolher_musica()
+    duracao = sum(i["d"] for i in itens)
+    faixas_musica, roteiro["musica_creditos"] = musica.escolher(roteiro, duracao)
 
     entradas = ["-i", "montado.mp4"]
-    filtros, mapa_audio = [], "0:a"
+    filtros_v, filtros, mapa_audio = [], [], "0:a"
+    if faixas:
+        # Faixas pretas em cima e embaixo; a legenda passa a ficar dentro da faixa de baixo, como no cinema
+        filtros_v.append(f"drawbox=x=0:y=0:w=iw:h={animacao.FAIXA_CINEMA}:color=black:t=fill,"
+                         f"drawbox=x=0:y=ih-{animacao.FAIXA_CINEMA}:w=iw:h={animacao.FAIXA_CINEMA}:color=black:t=fill")
     if config.LEGENDAS:
-        estilo = ("FontName=Arial,FontSize=20,Bold=1,PrimaryColour=&H00FFFFFF,OutlineColour=&H00000000,"
-                  "BorderStyle=1,Outline=2,Shadow=1,MarginV=45")
-        filtros.append(f"[0:v]subtitles=legendas.srt:force_style='{estilo}'[v]")
+        margem, tamanho = (10, 17) if faixas else (45, 20)
+        estilo = (f"FontName=Arial,FontSize={tamanho},Bold=1,PrimaryColour=&H00FFFFFF,OutlineColour=&H00000000,"
+                  f"BorderStyle=1,Outline=2,Shadow=1,MarginV={margem}")
+        filtros_v.append(f"subtitles=legendas.srt:force_style='{estilo}'")
+    if filtros_v:
+        filtros.append("[0:v]" + ",".join(filtros_v) + "[v]")
         mapa_video = "[v]"
     else:
         mapa_video = "0:v"
-    if musica:
-        print(f"  música de fundo: {musica.name}")
-        entradas += ["-stream_loop", "-1", "-i", str(musica)]
-        filtros.append(f"[1:a]volume={config.MUSICA_VOLUME},afade=t=in:d=2[m];"
-                       "[0:a][m]amix=inputs=2:duration=first:dropout_transition=0:normalize=0[a]")
+    if faixas_musica:
+        print(f"  música de fundo: {', '.join(f.stem for f in dict.fromkeys(faixas_musica))}")
+        for f in faixas_musica:
+            entradas += ["-i", str(f)]
+        filtros.append(musica.filtro_mistura(len(faixas_musica), 1, duracao))
         mapa_audio = "[a]"
 
     print("  renderizando vídeo final (legendas + música)...")

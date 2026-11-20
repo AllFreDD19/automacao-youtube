@@ -19,7 +19,7 @@ import unicodedata
 from concurrent.futures import ThreadPoolExecutor
 from datetime import datetime
 
-from automacao import (abertura, apresentador, config, edicao, folha_contato, jogos, narracao, pesquisa, roteiro,
+from automacao import (abertura, apresentador, config, edicao, folha_contato, jogos, musica, narracao, pesquisa, roteiro,
                        thumb_ia, thumbnail, visuais)
 
 sys.stdout.reconfigure(encoding="utf-8", line_buffering=True)
@@ -162,6 +162,8 @@ def cmd_editar(a):
     if creditos:
         texto += ["Image and footage credits:",
                   *[f"- {c['arquivo']} by {c['autor']}, {c['licenca']}, {c['url']}" for c in creditos], ""]
+    if r.get("musica_creditos"):
+        texto += ["Music:", *r["musica_creditos"], ""]
     texto.append("Tags: " + ", ".join(r.get("tags", [])))
     (p / "descricao_youtube.txt").write_text("\n".join(texto), encoding="utf-8")
     print(f"\nPronto! Vídeo: {video}\nDescrição e capítulos: {p / 'descricao_youtube.txt'}")
@@ -269,6 +271,10 @@ def cmd_voz(a):
                           a.velocidade or perfil["velocidade"])
 
 
+def cmd_musica(a):
+    musica.baixar(a.climas or None) if a.acao == "baixar" else musica.listar()
+
+
 def cmd_vozes(a):
     for v in narracao.listar_vozes():
         print(f"  {v['ShortName']:<28} {v['Gender']}")
@@ -343,6 +349,11 @@ def main():
     s.add_argument("--voz", help="outra voz do Edge, ex.: en-US-AndrewMultilingualNeural")
     s.add_argument("--velocidade", help='ex.: "+8%%"')
     s.set_defaults(func=cmd_voz)
+
+    s = sub.add_parser("musica", help="biblioteca de música de fundo por clima (musicas/<clima>/)")
+    s.add_argument("acao", choices=["baixar", "listar"])
+    s.add_argument("climas", nargs="*", help=f"só estes climas: {', '.join(musica.CATALOGO)}")
+    s.set_defaults(func=cmd_musica)
 
     s = sub.add_parser("vozes", help="lista vozes em português")
     s.set_defaults(func=cmd_vozes)
