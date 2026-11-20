@@ -28,11 +28,10 @@ Se o canal não for dito, perguntar. Campos "[preencher]": perguntar ao dono, nu
 
 ### Le Disciple du Savoir (@LeDiscipleduSavoir, ID UCe06mEV939UUr0k6-vYs7Qg)
 - Tema: filosofia e sabedoria antiga (estoicismo, desenvolvimento pessoal), narração personificada (sábio barbudo, ~50 anos).
-- Idioma: francês. Voz: Remy Multilingual (+8%) pela ferramenta: `rodar voz le-disciple <texto.txt>`
-  (substitui o Clipchamp desde 2026-11-19). Em 2026-11-20 o dono pediu mais testes para chegar mais perto da voz
-  antiga: opções com `--voz`, `--tom` e `--eq leve` (comparação: original F0 108 Hz, variação 16 Hz, centroide
-  1.117 Hz; Remy varia mais (31 Hz) e é mais brilhante; William Multilingual e Henri -14Hz com eq leve ficaram mais
-  perto nos números). Gravar a escolha do dono em `config.VOZES_CANAIS` ("tom", "eq").
+- Idioma: francês. Voz: William Multilingual (`en-AU-WilliamMultilingualNeural`, falando francês) +11%, tom -2Hz,
+  eq leve, pela ferramenta: `rodar voz le-disciple <texto.txt>` (escolhida pelo dono em 2026-11-20, opção 4 da
+  comparação com o áudio original do canal; antes era Remy +8%, que variava demais o tom). O original: F0 108 Hz,
+  variação 16 Hz, centroide 1.117 Hz; a William com esses ajustes deu 106 Hz, 22 Hz e 1.109 Hz.
 - Formato: roteiro em narração contínua, sem capítulos, listas ou títulos internos; 1 a 3 CTAs fluidas no meio do texto.
 - Abertura fixa (jingle) em todo vídeo. CTA padrão: "Rejoignez la communauté des personnes qui pensent différemment".
 - Entregáveis por vídeo: roteiro, título principal + 3 alternativas, miniatura, 25 prompts de imagens em ordem cronológica

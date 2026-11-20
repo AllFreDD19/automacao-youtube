@@ -93,7 +93,8 @@ VOZ = _env("VOZ", "pt-BR-AntonioNeural")
 # Voz de cada canal no lugar do Clipchamp (escolha do dono em 2026-11-19, depois de comparar com os áudios dos canais):
 # Remy Multilingual nos dois, com a velocidade medida nas narrações originais. Comando: rodar voz <canal> <texto.txt>
 VOZES_CANAIS = {
-    "le-disciple": {"voz": "fr-FR-RemyMultilingualNeural", "velocidade": "+8%"},
+    # Escolhida pelo dono em 2026-11-20 (opção 4 da comparação com o áudio original do canal)
+    "le-disciple": {"voz": "en-AU-WilliamMultilingualNeural", "velocidade": "+11%", "tom": "-2Hz", "eq": "leve"},
     "imperios": {"voz": "fr-FR-RemyMultilingualNeural", "velocidade": "-9%"},
     # provisória até o dono escolher a voz grave do canal
     "jogos": {"voz": "pt-BR-AntonioNeural", "velocidade": "+0%"},
