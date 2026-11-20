@@ -4,6 +4,7 @@ Ferramenta em Python que produz vídeos completos: roteiro → narração → vi
 Uso e comandos: ver `LEIA-ME.md`. Rodar com `.\rodar.bat <comando>`; chaves em `.env` (o dono preenche, nunca pedir no chat).
 
 ## Decisões do dono (valem para todos os canais)
+- Conversa no chat: sempre em português (Brasil), inclusive explicações técnicas e resumos.
 - Meta: expandir para mais canais. Cada canal novo ganha uma seção em "Canais" (copiar o modelo no fim da seção).
 - Meta de cada canal: 1.000 inscritos. Ritmo: 1 a 2 vídeos por dia em cada canal.
 - Roteiros seguem o Prompt Mestre em `prompts/roteiro_mestre.md` (não alterar sem pedido): abertura de retenção nos
