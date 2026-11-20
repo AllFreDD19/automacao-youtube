@@ -24,6 +24,7 @@ from pathlib import Path
 
 from PIL import Image, ImageDraw
 
+from . import musica as musica_lib
 from . import config, edicao, historia
 
 FPS = edicao.FPS
@@ -133,7 +134,7 @@ def _evento(ini, fim, texto, estilo="Tela"):
 
 
 def _musica(volume_padrao):
-    musica = edicao._escolher_musica()
+    musica = musica_lib.faixa_solta()
     if not musica:
         return None, None, volume_padrao
     credito = musica.with_suffix(".txt")
@@ -478,7 +479,7 @@ def curtos(pasta, so=None):
         print(f"  {c['nome']}: {c['arquivo']} {c['de']} a {c['ate']} ({dur:.0f} s)")
         _render_trecho(_video(pasta, c["arquivo"]), ini, dur, c.get("som_jogo", 0.8), bruto, tela, vertical=True)
         final = destino_pasta / f"{c['nome']}.mp4"
-        musica = edicao._escolher_musica() if c.get("musica", True) else None
+        musica = musica_lib.faixa_solta() if c.get("musica", True) else None
         if musica:
             edicao._rodar(["-i", str(bruto.resolve()), "-stream_loop", "-1", "-i", str(musica.resolve()),
                            "-filter_complex",

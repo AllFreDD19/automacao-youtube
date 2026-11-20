@@ -24,11 +24,11 @@ def duracao_audio(caminho):
     return float(saida.stdout.strip())
 
 
-async def _narrar(texto, destino, voz, velocidade, limite):
+async def _narrar(texto, destino, voz, velocidade, limite, tom="+0Hz"):
     async with limite:
         for tentativa in range(3):
             try:
-                await edge_tts.Communicate(texto, voz, rate=velocidade, proxy=config.PROXY).save(str(destino))
+                await edge_tts.Communicate(texto, voz, rate=velocidade, pitch=tom, proxy=config.PROXY).save(str(destino))
                 return
             except Exception:
                 if tentativa == 2:
@@ -36,9 +36,16 @@ async def _narrar(texto, destino, voz, velocidade, limite):
                 await asyncio.sleep(3)
 
 
-async def _narrar_todas(tarefas, voz, velocidade, em_paralelo):
+async def _narrar_todas(tarefas, voz, velocidade, em_paralelo, tom="+0Hz"):
     limite = asyncio.Semaphore(em_paralelo)
-    await asyncio.gather(*(_narrar(texto, destino, voz, velocidade, limite) for texto, destino in tarefas))
+    await asyncio.gather(*(_narrar(texto, destino, voz, velocidade, limite, tom) for texto, destino in tarefas))
+
+
+# Equalização da voz (aproxima o timbre da gravação original do canal). "leve" = um pouco mais grave e menos
+# brilho: na comparação de 2026-11-20 deixou o centroide espectral igual ao do canal francês (~1.120 Hz).
+EQ_VOZ = {
+    "leve": "bass=g=1.5:f=140,equalizer=f=3200:t=q:w=1.2:g=-2,equalizer=f=7000:t=q:w=1:g=-1.5",
+}
 
 
 def _usa_kokoro(roteiro, voz):
@@ -162,7 +169,7 @@ def listar_vozes():
     return [v for v in vozes if v["Locale"].startswith("pt-")]
 
 
-def narrar_texto(texto, destino, voz, velocidade="+0%"):
+def narrar_texto(texto, destino, voz, velocidade="+0%", tom="+0Hz", eq=None):
     """Narra um texto inteiro num arquivo só (substitui o Clipchamp). Parágrafos separados por linha em branco viram
     blocos narrados um a um (se um falhar, só ele é refeito) e são juntados com uma pausa curta, como no Clipchamp."""
     from pathlib import Path
@@ -172,9 +179,9 @@ def narrar_texto(texto, destino, voz, velocidade="+0%"):
     pasta.mkdir(parents=True, exist_ok=True)
     tarefas = [(b, pasta / f"bloco_{i:03d}.mp3") for i, b in enumerate(blocos, 1)]
     faltam = [(b, d) for b, d in tarefas if not d.exists() or d.stat().st_size == 0]
-    print(f"  {len(blocos)} bloco(s), {len(texto):,} caracteres, voz {voz} ({velocidade})")
+    print(f"  {len(blocos)} bloco(s), {len(texto):,} caracteres, voz {voz} ({velocidade}, tom {tom}, eq {eq or '-'})")
     if faltam:
-        asyncio.run(_narrar_todas(faltam, voz, velocidade, 4))
+        asyncio.run(_narrar_todas(faltam, voz, velocidade, 4, tom))
     pausa = pasta / "pausa.mp3"
     if not pausa.exists():
         subprocess.run([config.ffmpeg(), "-y", "-loglevel", "error", "-f", "lavfi", "-i",
@@ -184,8 +191,9 @@ def narrar_texto(texto, destino, voz, velocidade="+0%"):
     for _, d in tarefas:
         itens += [d, pausa]
     lista.write_text("".join(f"file '{x.resolve().as_posix()}'\n" for x in itens[:-1]), encoding="utf-8")
+    filtro = ["-af", EQ_VOZ[eq]] if eq in EQ_VOZ else []
     subprocess.run([config.ffmpeg(), "-y", "-loglevel", "error", "-f", "concat", "-safe", "0", "-i", str(lista),
-                    "-ar", "48000", "-ac", "2", "-b:a", "192k", str(destino)], check=True)
+                    *filtro, "-ar", "48000", "-ac", "2", "-b:a", "192k", str(destino)], check=True)
     for x in pasta.iterdir():
         x.unlink()
     pasta.rmdir()

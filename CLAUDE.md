@@ -29,7 +29,10 @@ Se o canal não for dito, perguntar. Campos "[preencher]": perguntar ao dono, nu
 ### Le Disciple du Savoir (@LeDiscipleduSavoir, ID UCe06mEV939UUr0k6-vYs7Qg)
 - Tema: filosofia e sabedoria antiga (estoicismo, desenvolvimento pessoal), narração personificada (sábio barbudo, ~50 anos).
 - Idioma: francês. Voz: Remy Multilingual (+8%) pela ferramenta: `rodar voz le-disciple <texto.txt>`
-  (substitui o Clipchamp desde 2026-11-19; mesma voz e ritmo do canal, aprovada pelo dono).
+  (substitui o Clipchamp desde 2026-11-19). Em 2026-11-20 o dono pediu mais testes para chegar mais perto da voz
+  antiga: opções com `--voz`, `--tom` e `--eq leve` (comparação: original F0 108 Hz, variação 16 Hz, centroide
+  1.117 Hz; Remy varia mais (31 Hz) e é mais brilhante; William Multilingual e Henri -14Hz com eq leve ficaram mais
+  perto nos números). Gravar a escolha do dono em `config.VOZES_CANAIS` ("tom", "eq").
 - Formato: roteiro em narração contínua, sem capítulos, listas ou títulos internos; 1 a 3 CTAs fluidas no meio do texto.
 - Abertura fixa (jingle) em todo vídeo. CTA padrão: "Rejoignez la communauté des personnes qui pensent différemment".
 - Entregáveis por vídeo: roteiro, título principal + 3 alternativas, miniatura, 25 prompts de imagens em ordem cronológica
@@ -72,6 +75,10 @@ Se o canal não for dito, perguntar. Campos "[preencher]": perguntar ao dono, nu
 - Identidade: mascote ORIGINAL (arquétipo de líder durão, sarcástico e calmo; opções em `canal_jogos/`, comando
   `jogo mascote`). Nunca usar personagem de outra obra (ex.: Yami de Black Clover) nem imitar a voz de dublador ou
   pessoa real: voz grave genérica do Clipchamp.
+- Cortes de live (`automacao/live.py`, `rodar live info|baixar|momentos`): só lives do dono. Twitch e Kick
+  funcionam na nuvem (yt-dlp; baixa só o trecho com `--de/--ate`; live no ar: `--minutos N`); YouTube só no
+  Windows (bot check aqui). `momentos` mede o áudio, ranqueia os trechos mais animados, transcreve só eles e
+  gera `momentos.md` + quadros; depois os escolhidos vão para `roteiro_jogo.json` e `jogo curtos`/`montar`.
 - Ferramenta: `automacao/jogos.py` (`.\rodar.bat jogo preparar|gravar|montar|curtos|thumb <projeto>`, ver LEIA-ME).
   Para escrever o `roteiro_jogo.json`: rodar `preparar`, ABRIR as imagens de `folhas/` e ler `mapa.md`; cada trecho
   usa só o que aparece nos quadros daquele intervalo. Abertura de retenção e 3 CTAs curtos (regra geral) também valem.

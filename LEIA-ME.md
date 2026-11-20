@@ -121,6 +121,23 @@ Outras opções:
 - **Vídeos de banco**: Pexels (chave `PEXELS_API_KEY`), Pixabay, NASA e vídeos do Wikimedia Commons (cinejornais e
   filmes de arquivo com licença livre; crédito automático). Wikimedia exige contato na identificação: já configurado.
 
+### Cortes de live (canal de jogos)
+
+Só lives suas (ou com autorização escrita do criador). Twitch e Kick funcionam também na nuvem; YouTube só no Windows.
+
+- `.\rodar.bat live info <link>`: título, se está ao vivo e duração.
+- `.\rodar.bat live baixar <link> <projeto> --de 1:02:00 --ate 1:20:00`: baixa só esse trecho da gravação para
+  `projetos\<projeto>\gameplay\` (sem `--de/--ate`, a gravação inteira; live no ar: `--minutos 30` grava os
+  próximos 30 min).
+- `.\rodar.bat live momentos <projeto> --quantos 10 --duracao 45`: acha os trechos mais animados pelo áudio,
+  transcreve só eles e gera `momentos.md` com quadro e fala de cada um, já com a linha pronta para o campo
+  `"curtos"` do `roteiro_jogo.json`. Depois: `.\rodar.bat jogo curtos <projeto>`.
+
+### Voz dos canais
+
+`.\rodar.bat voz <canal> <texto.txt>` usa a voz de `VOZES_CANAIS` (`config.py`). Para testar outras:
+`--voz en-AU-WilliamMultilingualNeural`, `--tom "-2Hz"` (mais grave), `--eq leve` (timbre mais quente).
+
 ### Apresentador de IA (desligado)
 
 Um rosto fictício gerado por IA falava numa janela redonda na abertura e nos pedidos de inscrição (SadTalker,

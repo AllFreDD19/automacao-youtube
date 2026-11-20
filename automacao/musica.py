@@ -99,6 +99,17 @@ def escolher(roteiro, duracao):
     return escolhidas, creditos
 
 
+def faixa_solta(clima=None):
+    """Uma faixa para vídeos curtos ou de jogo: do clima pedido, senão da raiz de musicas/, senão de qualquer clima."""
+    pastas = [config.PASTA_MUSICAS / clima] if clima else []
+    pastas += [config.PASTA_MUSICAS, *sorted(p for p in config.PASTA_MUSICAS.glob("*") if p.is_dir())]
+    for pasta in pastas:
+        faixas = [p for p in pasta.glob("*") if p.suffix.lower() in EXTENSOES and not p.name.startswith("_")]
+        if faixas:
+            return random.choice(faixas)
+    return None
+
+
 def _duracao(arquivo):
     r = subprocess.run([config.ffprobe(), "-v", "error", "-show_entries",
                         "format=duration", "-of", "csv=p=0", str(arquivo)], capture_output=True, text=True)

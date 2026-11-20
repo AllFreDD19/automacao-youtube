@@ -20,6 +20,7 @@ import unicodedata
 from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
 
+from . import musica as musica_lib
 from . import config, edicao, paisagens
 
 FPS = edicao.FPS
@@ -294,7 +295,7 @@ def renderizar(pasta, audio, total, legendas, temas, semente=None):
     lista = pasta_blocos / "lista.txt"
     lista.write_text("".join(f"file '{a.resolve().as_posix()}'\n" for a in arquivos), encoding="utf-8")
     edicao._rodar(["-f", "concat", "-safe", "0", "-i", str(lista), "-c", "copy", str(pasta / "trilha_video.mp4")])
-    musica = edicao._escolher_musica()
+    musica = musica_lib.faixa_solta()
     entradas = ["-i", "trilha_video.mp4", "-i", str(audio.resolve())]
     if musica:
         entradas += ["-stream_loop", "-1", "-i", str(musica)]

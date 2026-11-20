@@ -19,7 +19,7 @@ import unicodedata
 from concurrent.futures import ThreadPoolExecutor
 from datetime import datetime
 
-from automacao import (abertura, apresentador, config, edicao, folha_contato, jogos, musica, narracao, pesquisa, roteiro,
+from automacao import (abertura, apresentador, config, edicao, folha_contato, jogos, live, musica, narracao, pesquisa, roteiro,
                        thumb_ia, thumbnail, visuais)
 
 sys.stdout.reconfigure(encoding="utf-8", line_buffering=True)
@@ -268,7 +268,8 @@ def cmd_voz(a):
         raise SystemExit(f"Texto não encontrado: {origem}")
     destino = Path(a.saida) if a.saida else origem.with_name("narracao_usuario.mp3")
     narracao.narrar_texto(origem.read_text(encoding="utf-8-sig"), destino, a.voz or perfil["voz"],
-                          a.velocidade or perfil["velocidade"])
+                          a.velocidade or perfil["velocidade"], a.tom or perfil.get("tom", "+0Hz"),
+                          a.eq or perfil.get("eq"))
 
 
 def cmd_musica(a):
@@ -342,12 +343,17 @@ def main():
     s = sub.add_parser("jogo", help="canal de jogos: preparar | gravar | montar | curtos | thumb | mascote")
     jogos.opcoes(s)
 
+    s = sub.add_parser("live", help="cortes de live: info | baixar | momentos (Twitch e Kick; YouTube no Windows)")
+    live.opcoes(s)
+
     s = sub.add_parser("voz", help="narra um texto com a voz do canal (no lugar do Clipchamp)")
     s.add_argument("canal", choices=sorted(config.VOZES_CANAIS))
     s.add_argument("texto", help="arquivo .txt (parágrafos separados por linha em branco)")
     s.add_argument("--saida", help="arquivo de áudio (padrão: narracao_usuario.mp3 ao lado do texto)")
     s.add_argument("--voz", help="outra voz do Edge, ex.: en-US-AndrewMultilingualNeural")
     s.add_argument("--velocidade", help='ex.: "+8%%"')
+    s.add_argument("--tom", help='ex.: "-2Hz" (mais grave)')
+    s.add_argument("--eq", choices=sorted(narracao.EQ_VOZ), help="equalização do timbre")
     s.set_defaults(func=cmd_voz)
 
     s = sub.add_parser("musica", help="biblioteca de música de fundo por clima (musicas/<clima>/)")
