@@ -167,3 +167,8 @@ Se o canal não for dito, perguntar. Campos "[preencher]": perguntar ao dono, nu
 - Thumbnails com logo de marca real + palavra negativa podem soar como acusação à marca; nunca usar pessoa real em
   imagem fabricada.
 - Nunca usar trechos de vídeos de outros canais do YouTube (Content ID, strikes e "conteúdo reutilizado").
+- Vídeo de Roma (2026-11-20): a busca pelo nome trouxe fotos modernas com o mesmo nome (papa atual em "Pope Leo",
+  políticos em "Zeno", balsa chamada "Adrianople", cartaz do filme "Attila" com atores reais, vídeo aéreo de
+  prédios). Sempre abrir a folha e trocar: pessoa real -> foto real boa do próprio vídeo; resto -> animação.
+- Na nuvem o Wikimedia libera cerca de 1 download por minuto: 135 cenas levaram ~2 h e 30 falharam. Planejar
+  mais animações (~40%) e reaproveitar fotos boas em vez de insistir; a 2a rodada quase não rendeu.
