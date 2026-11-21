@@ -341,18 +341,24 @@ def gradacao_cinema(im, suave=False):
     return Image.composite(Image.new("RGB", im.size), im, vin)
 
 
-def _enquadrar_personagem(im, lado_pessoa, alvo=0.3):
-    """Corta a cena larga em 16:9 pondo o personagem principal (achado pelo rembg) a ~30% da borda do seu lado."""
+def _enquadrar_personagem(im, lado_pessoa, alvo=0.28):
+    """Corta a cena larga em 16:9 pondo o personagem principal (achado pelo rembg) a ~28% da borda do seu lado.
+    Se ele nasceu do lado do texto, a imagem é espelhada antes (cena sem letras: espelhar não estraga nada)."""
     r = A / im.height
     im = im.resize((int(im.width * r) + 1, A), Image.LANCZOS)
+
+    def centro(img):
+        try:
+            alfa = np.asarray(recortar_mascara(img)).astype(float)
+            cols = alfa.sum(axis=0)
+            return float((cols * np.arange(len(cols))).sum() / max(cols.sum(), 1))
+        except Exception:  # noqa: BLE001
+            return img.width / 2
+    cx = centro(im)
+    if (lado_pessoa == "left" and cx > im.width * 0.5) or (lado_pessoa == "right" and cx < im.width * 0.5):
+        im, cx = ImageOps.mirror(im), im.width - cx
     if im.width <= L:
         return cobrir(im)
-    try:
-        alfa = np.asarray(recortar_mascara(im)).astype(float)
-        cols = alfa.sum(axis=0)
-        cx = float((cols * np.arange(len(cols))).sum() / max(cols.sum(), 1))
-    except Exception:  # noqa: BLE001
-        cx = im.width / 2
     destino_x = alvo * L if lado_pessoa == "left" else (1 - alvo) * L
     x0 = int(min(max(cx - destino_x, 0), im.width - L))
     return im.crop((x0, 0, x0 + L, A))
@@ -402,7 +408,7 @@ NEGATIVO = ("cartoon, anime, illustration, painting, 3d render, text, letters, w
             "extra limbs, blurry face, modern clothes, sunglasses")
 
 
-def ia_horde_lote(prompts, largura=1344, altura=640, passos=30, limite_s=1800):
+def ia_horde_lote(prompts, largura=1536, altura=640, passos=30, limite_s=1800):
     """Pede todas as imagens de uma vez ao AI Horde e espera; devolve uma lista de PIL.Image (None se falhou)."""
     import os
     cab = {"apikey": os.getenv("AI_HORDE_KEY") or "0000000000", "Client-Agent": f"automacao-youtube:1.1:{config.USER_AGENT.split('(')[1].split(')')[0]}"}
@@ -442,7 +448,7 @@ def ia_horde_lote(prompts, largura=1344, altura=640, passos=30, limite_s=1800):
     return [prontos.get(i) if i else None for i in ids]
 
 
-def epicos(pasta, opcoes, lado_texto="direita"):
+def epicos(pasta, opcoes, lado_texto="direita", numeros=None):
     """Várias opções de thumb épica de uma vez (todas as cenas pedidas juntas ao AI Horde).
     opcoes: [{"cena": "...", "ouro": "MIL AÑOS...", "prata": ["Y CAYÓ EN", "UNA MAÑANA"]}, ...]"""
     lado_pessoa = "left" if lado_texto == "direita" else "right"
@@ -452,11 +458,13 @@ def epicos(pasta, opcoes, lado_texto="direita"):
                 "photorealistic, highly detailed") for o in opcoes]
     imagens = ia_horde_lote(prompts)
     saidas = []
-    for n, (o, im, pr) in enumerate(zip(opcoes, imagens, prompts), 1):
+    numeros = numeros or list(range(1, len(opcoes) + 1))
+    for n, o, im, pr in zip(numeros, opcoes, imagens, prompts):
         if im is None:
             print(f"  opção {n}: AI Horde falhou, usando Pollinations")
             im = ia(pr, 1680, 720, semente=n)
         destino = Path(pasta) / f"thumb_epica_{n}.jpg"
+        im.save(Path(pasta) / f"thumb_epica_{n}_cena.jpg", quality=95)  # para reajustar texto sem gerar de novo
         epico(destino, o["cena"], o["ouro"], o["prata"], lado_texto, imagem=im)
         saidas.append(destino)
     return saidas
