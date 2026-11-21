@@ -320,9 +320,13 @@ def _ornamento(tela, cx, y, largura, cor=(232, 178, 60)):
                (cx - r, y), (cx - 6, y - 6)], fill=cor + (255,), outline=(70, 40, 8))
 
 
-def gradacao_cinema(im):
+def gradacao_cinema(im, suave=False):
     """Sombras azul-petróleo e luzes quentes (o look de filme da referência), mais nitidez e vinheta leve.
     Imagem escura (o gerador às vezes entrega noite fechada) ganha exposição antes."""
+    if suave:  # imagem do AI Horde já vem com cor de cinema: só nitidez e vinheta leve
+        im = realcar(im, 1.06, 1.06, 1.0).filter(ImageFilter.UnsharpMask(radius=2, percent=80, threshold=3))
+        vin = Image.radial_gradient("L").resize(im.size).point(lambda v: int(min(255, v * 1.1) * 0.4))
+        return Image.composite(Image.new("RGB", im.size), im, vin)
     media = np.asarray(im.convert("L")).mean()
     if media < 95:
         im = ImageEnhance.Brightness(im).enhance(min(1.8, 95 / max(media, 20)))
@@ -389,11 +393,83 @@ def _personagem_integrado(tela_rgb, personagem, lado_pessoa, semente):
     return base.convert("RGB")
 
 
-def epico(destino, cena, linha_ouro, linhas_prata, lado_texto="direita", semente=1, personagem=None):
-    """Thumb no estilo do canal: cena inteira + personagem grande do lado oposto ao texto + texto épico metálico.
-    personagem: descrição do personagem GENÉRICO (nunca pessoa real); sem ele, a cena precisa trazer o foco."""
+# AI Horde (aihorde.net): rede comunitária grátis, sem cadastro (chave anônima "0000000000"; com conta grátis a fila
+# anda mais rápido: AI_HORDE_KEY no .env). Juggernaut XL dá cenas de cinema realistas, bem mais naturais que o
+# Pollinations, que em 2026-11-21 só oferecia o modelo "sana". ~5 min por imagem na fila anônima.
+HORDE = "https://aihorde.net/api/v2"
+HORDE_MODELO = "Juggernaut XL"
+NEGATIVO = ("cartoon, anime, illustration, painting, 3d render, text, letters, watermark, logo, deformed, extra fingers, "
+            "extra limbs, blurry face, modern clothes, sunglasses")
+
+
+def ia_horde_lote(prompts, largura=1344, altura=640, passos=30, limite_s=1800):
+    """Pede todas as imagens de uma vez ao AI Horde e espera; devolve uma lista de PIL.Image (None se falhou)."""
+    import os
+    cab = {"apikey": os.getenv("AI_HORDE_KEY") or "0000000000", "Client-Agent": f"automacao-youtube:1.1:{config.USER_AGENT.split('(')[1].split(')')[0]}"}
+    ids = []
+    for pr in prompts:
+        corpo = {"prompt": f"{pr} ### {NEGATIVO}", "models": [HORDE_MODELO], "r2": True, "nsfw": False,
+                 "censor_nsfw": True, "params": {"width": largura, "height": altura, "steps": passos, "cfg_scale": 6,
+                                                 "sampler_name": "k_euler_a", "n": 1}}
+        try:
+            r = requests.post(f"{HORDE}/generate/async", json=corpo, headers=cab, timeout=60)
+            ids.append(r.json().get("id") if r.ok else None)
+            if not r.ok:
+                print(f"  AI Horde recusou: {r.status_code} {r.text[:150]}")
+        except requests.RequestException:
+            ids.append(None)
+    t0, prontos = time.time(), {}
+    while time.time() - t0 < limite_s and len(prontos) < sum(1 for i in ids if i):
+        time.sleep(15)
+        for i in ids:
+            if not i or i in prontos:
+                continue
+            try:
+                c = requests.get(f"{HORDE}/generate/check/{i}", headers=cab, timeout=30).json()
+            except (requests.RequestException, ValueError):
+                continue
+            if c.get("faulted"):
+                prontos[i] = None
+            elif c.get("done"):
+                try:
+                    st = requests.get(f"{HORDE}/generate/status/{i}", headers=cab, timeout=60).json()
+                    url = st["generations"][0]["img"]
+                    prontos[i] = Image.open(io.BytesIO(requests.get(url, timeout=120).content)).convert("RGB")
+                except Exception:  # noqa: BLE001
+                    prontos[i] = None
+        print(f"  AI Horde: {sum(1 for v in prontos.values() if v)} de {len(prompts)} prontas "
+              f"({int(time.time() - t0)} s)", flush=True)
+    return [prontos.get(i) if i else None for i in ids]
+
+
+def epicos(pasta, opcoes, lado_texto="direita"):
+    """Várias opções de thumb épica de uma vez (todas as cenas pedidas juntas ao AI Horde).
+    opcoes: [{"cena": "...", "ouro": "MIL AÑOS...", "prata": ["Y CAYÓ EN", "UNA MAÑANA"]}, ...]"""
     lado_pessoa = "left" if lado_texto == "direita" else "right"
-    if personagem:
+    prompts = [("cinematic film still, " + o["cena"] + f", the main character on the {lado_pessoa} side of the frame, "
+                "medium shot from the waist up, face clearly visible and lit by warm light, other people and the "
+                "setting visible behind, teal and orange color grade, dramatic rim light, shallow depth of field, "
+                "photorealistic, highly detailed") for o in opcoes]
+    imagens = ia_horde_lote(prompts)
+    saidas = []
+    for n, (o, im, pr) in enumerate(zip(opcoes, imagens, prompts), 1):
+        if im is None:
+            print(f"  opção {n}: AI Horde falhou, usando Pollinations")
+            im = ia(pr, 1680, 720, semente=n)
+        destino = Path(pasta) / f"thumb_epica_{n}.jpg"
+        epico(destino, o["cena"], o["ouro"], o["prata"], lado_texto, imagem=im)
+        saidas.append(destino)
+    return saidas
+
+
+def epico(destino, cena, linha_ouro, linhas_prata, lado_texto="direita", semente=1, personagem=None, imagem=None):
+    """Thumb no estilo do canal: cena inteira + personagem grande do lado oposto ao texto + texto épico metálico.
+    imagem: cena já gerada (AI Horde); personagem: GENÉRICO, gerado à parte e recortado (nunca pessoa real)."""
+    lado_pessoa = "left" if lado_texto == "direita" else "right"
+    if imagem is not None:
+        # Cena inteira de uma vez (o mais natural, como a referência): só enquadra e dá o acabamento leve
+        tela = gradacao_cinema(_enquadrar_personagem(imagem, lado_pessoa), suave=True).convert("RGBA")
+    elif personagem:
         fundo_ = cobrir(ia(cena + ", wide establishing shot, no people in the foreground, cinematic film still, "
                            "dramatic light, highly detailed", semente=semente))
         tela = gradacao_cinema(_personagem_integrado(fundo_, personagem, lado_pessoa, semente)).convert("RGBA")
