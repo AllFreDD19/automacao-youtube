@@ -252,3 +252,178 @@ if __name__ == "__main__":
         destino = pasta / f"thumb_impacto_{i}.jpg"
         {"rosto": rosto, "objeto": objeto, "antes_depois": antes_depois}[tipo](destino, **c)
         print(destino)
+
+
+# ---------------------------------------------------------------- estilo "épico" (padrão do Impérios Caídos)
+# Referência do dono (thumb do próprio canal, 2026-11-21): cena de cinema realista na thumb inteira, personagem
+# grande de um lado integrado ao cenário, noite azulada com pontos de luz quente; do outro lado, fonte serifada
+# épica: 1a linha dourada metálica com reticências, linhas seguintes prateadas, ornamento dourado embaixo.
+FONTE_EPICA = config.PASTA_FONTES / "Cinzel-Black.ttf"
+OURO = [(255, 246, 190), (255, 214, 90), (214, 150, 30), (150, 92, 18)]
+PRATA = [(255, 255, 255), (236, 238, 242), (190, 196, 206), (150, 156, 168)]
+
+
+def _fonte_epica(tamanho):
+    from PIL import ImageFont
+    try:
+        return ImageFont.truetype(str(FONTE_EPICA), tamanho)
+    except OSError:
+        return _fonte(tamanho)
+
+
+def _degrade(largura, altura, cores):
+    """Degradê vertical por várias cores (efeito metálico)."""
+    img = Image.new("RGB", (1, len(cores)))
+    for i, c in enumerate(cores):
+        img.putpixel((0, i), c)
+    return img.resize((largura, altura), Image.BICUBIC)
+
+
+def _linha_metalica(tela, txt, cx, y, tamanho, cores, contorno=(40, 22, 6)):
+    """Texto centrado em cx com degradê metálico, contorno escuro, brilho no topo e sombra. Devolve a altura."""
+    f = _fonte_epica(tamanho)
+    d0 = ImageDraw.Draw(tela)
+    caixa = d0.textbbox((0, 0), txt, font=f, stroke_width=max(3, tamanho // 22))
+    w, h = caixa[2] - caixa[0] + 20, caixa[3] - caixa[1] + 20
+    x = int(cx - w / 2)
+    borda = max(3, tamanho // 22)
+    mascara = Image.new("L", (w, h))
+    ImageDraw.Draw(mascara).text((10 - caixa[0], 10 - caixa[1]), txt, font=f, fill=255)
+    contorno_m = Image.new("L", (w, h))
+    ImageDraw.Draw(contorno_m).text((10 - caixa[0], 10 - caixa[1]), txt, font=f, fill=255,
+                                    stroke_width=borda, stroke_fill=255)
+    # Sombra larga e suave (descola do fundo)
+    sombra = Image.new("RGBA", (w + 60, h + 60))
+    sombra.paste(Image.new("RGBA", (w, h), (0, 0, 0, 230)), (36, 40), contorno_m.filter(ImageFilter.MaxFilter(5)))
+    tela.alpha_composite(sombra.filter(ImageFilter.GaussianBlur(10)), (x - 30, y - 30))
+    camada = Image.new("RGBA", (w, h))
+    camada.paste(Image.new("RGBA", (w, h), contorno + (255,)), (0, 0), contorno_m)
+    metal = _degrade(w, h, cores).convert("RGBA")
+    camada.paste(metal, (0, 0), mascara)
+    # Brilho fino na parte de cima das letras (parece relevo)
+    topo = ImageChops.subtract(mascara, mascara.transform(mascara.size, Image.AFFINE, (1, 0, 0, 0, 1, -3)))
+    camada.paste(Image.new("RGBA", (w, h), (255, 255, 240, 160)), (0, 0), topo.filter(ImageFilter.GaussianBlur(0.6)))
+    tela.alpha_composite(camada, (x, y))
+    return h
+
+
+def _ornamento(tela, cx, y, largura, cor=(232, 178, 60)):
+    """Linha dourada fina com uma estrela de quatro pontas no meio."""
+    d = ImageDraw.Draw(tela)
+    for lado in (-1, 1):
+        for k in range(0, largura // 2 - 30, 2):
+            alfa = int(255 * (1 - k / (largura / 2)))
+            px = cx + lado * (30 + k)
+            d.line([(px, y), (px + lado * 2, y)], fill=cor + (alfa,), width=3)
+    r = 22
+    d.polygon([(cx, y - r), (cx + 6, y - 6), (cx + r, y), (cx + 6, y + 6), (cx, y + r), (cx - 6, y + 6),
+               (cx - r, y), (cx - 6, y - 6)], fill=cor + (255,), outline=(70, 40, 8))
+
+
+def gradacao_cinema(im):
+    """Sombras azul-petróleo e luzes quentes (o look de filme da referência), mais nitidez e vinheta leve.
+    Imagem escura (o gerador às vezes entrega noite fechada) ganha exposição antes."""
+    media = np.asarray(im.convert("L")).mean()
+    if media < 95:
+        im = ImageEnhance.Brightness(im).enhance(min(1.8, 95 / max(media, 20)))
+    im = realcar(im, 1.15, 1.18, 1.0)
+    cinza = ImageOps.grayscale(im)
+    sombras = Image.new("RGB", im.size, (20, 48, 78))
+    luzes = Image.new("RGB", im.size, (255, 196, 120))
+    im = Image.composite(im, Image.blend(im, sombras, 0.22), cinza.point(lambda v: min(255, v * 2)))
+    im = Image.composite(Image.blend(im, luzes, 0.12), im, cinza.point(lambda v: max(0, (v - 150) * 2)))
+    im = im.filter(ImageFilter.UnsharpMask(radius=2, percent=130, threshold=2))
+    vin = Image.radial_gradient("L").resize(im.size).point(lambda v: int(min(255, v * 1.15) * 0.5))
+    return Image.composite(Image.new("RGB", im.size), im, vin)
+
+
+def _enquadrar_personagem(im, lado_pessoa, alvo=0.3):
+    """Corta a cena larga em 16:9 pondo o personagem principal (achado pelo rembg) a ~30% da borda do seu lado."""
+    r = A / im.height
+    im = im.resize((int(im.width * r) + 1, A), Image.LANCZOS)
+    if im.width <= L:
+        return cobrir(im)
+    try:
+        alfa = np.asarray(recortar_mascara(im)).astype(float)
+        cols = alfa.sum(axis=0)
+        cx = float((cols * np.arange(len(cols))).sum() / max(cols.sum(), 1))
+    except Exception:  # noqa: BLE001
+        cx = im.width / 2
+    destino_x = alvo * L if lado_pessoa == "left" else (1 - alvo) * L
+    x0 = int(min(max(cx - destino_x, 0), im.width - L))
+    return im.crop((x0, 0, x0 + L, A))
+
+
+def recortar_mascara(im):
+    from rembg import new_session, remove
+    global _sessao_rembg
+    if _sessao_rembg is None:
+        _sessao_rembg = new_session("isnet-general-use")
+    return remove(im, session=_sessao_rembg, only_mask=True)
+
+
+def _personagem_integrado(tela_rgb, personagem, lado_pessoa, semente):
+    """Personagem gerado à parte, recortado (rembg) e posto grande do lado certo, com luz de contorno suave e
+    sombra difusa, para parecer parte da cena (não um adesivo)."""
+    suj = recortar(ia(personagem + ", medium shot from the waist up, plain simple background, face lit by warm "
+                      "light, cinematic", 832, 1024, semente=semente + 5))
+    altura = int(A * 0.98)
+    s = suj.resize((int(suj.width * altura / suj.height), altura), Image.LANCZOS)
+    if s.width > int(L * 0.55):  # muito largo: limita e mantém a base no chão
+        r = L * 0.55 / s.width
+        s = s.resize((int(s.width * r), int(s.height * r)), Image.LANCZOS)
+    x = int(L * 0.02) if lado_pessoa == "left" else L - s.width - int(L * 0.02)
+    y = A - s.height + 6
+    base = tela_rgb.convert("RGBA")
+    alfa = s.getchannel("A")
+    halo = Image.new("L", (s.width + 80, s.height + 80))
+    halo.paste(alfa, (40, 40))
+    sombra = Image.new("RGBA", halo.size, (0, 0, 0, 0))
+    sombra.paste(Image.new("RGBA", halo.size, (0, 0, 0, 170)), (0, 0), halo.filter(ImageFilter.GaussianBlur(25)))
+    base.alpha_composite(sombra, (x - 40 + 12, y - 40 + 10))
+    luz = Image.new("RGBA", halo.size, (0, 0, 0, 0))
+    luz.paste(Image.new("RGBA", halo.size, (255, 190, 110, 120)), (0, 0),
+              halo.filter(ImageFilter.MaxFilter(9)).filter(ImageFilter.GaussianBlur(10)))
+    base.alpha_composite(luz, (x - 40, y - 40))
+    base.alpha_composite(s, (x, y))
+    return base.convert("RGB")
+
+
+def epico(destino, cena, linha_ouro, linhas_prata, lado_texto="direita", semente=1, personagem=None):
+    """Thumb no estilo do canal: cena inteira + personagem grande do lado oposto ao texto + texto épico metálico.
+    personagem: descrição do personagem GENÉRICO (nunca pessoa real); sem ele, a cena precisa trazer o foco."""
+    lado_pessoa = "left" if lado_texto == "direita" else "right"
+    if personagem:
+        fundo_ = cobrir(ia(cena + ", wide establishing shot, no people in the foreground, cinematic film still, "
+                           "dramatic light, highly detailed", semente=semente))
+        tela = gradacao_cinema(_personagem_integrado(fundo_, personagem, lado_pessoa, semente)).convert("RGBA")
+    else:
+        prompt = (cena + ", medium shot from the waist up, the main character occupies about a third of the frame "
+                  "with the face clearly visible and lit by warm light, cinematic film still, dramatic rim light, "
+                  "teal and orange color grade, shallow depth of field, highly detailed")
+        # Cena mais larga que 16:9: margem para pôr o personagem do lado certo
+        tela = gradacao_cinema(_enquadrar_personagem(ia(prompt, 1680, 720, semente=semente), lado_pessoa)).convert("RGBA")
+    # Escurece levemente o lado do texto para as letras saltarem
+    grad = Image.linear_gradient("L").rotate(90 if lado_texto == "direita" else -90).resize((L, A))
+    escuro = Image.new("RGBA", (L, A), (0, 0, 0, 0))
+    escuro.putalpha(grad.point(lambda v: int(max(0, v - 110) * 0.9)))
+    tela.alpha_composite(escuro)
+    cx = int(L * 0.72) if lado_texto == "direita" else int(L * 0.28)
+    largura = int(L * 0.5)
+    # Tamanhos: a linha dourada é a maior; as prateadas ~65% dela, todas cabendo na largura
+    d = ImageDraw.Draw(tela)
+
+    def cabe(txt, maximo):
+        t = maximo
+        while t > 30 and d.textlength(txt, font=_fonte_epica(t)) > largura:
+            t -= 4
+        return t
+    t_ouro = cabe(linha_ouro, 170)
+    t_prata = min(cabe(l, int(t_ouro * 0.72)) for l in linhas_prata) if linhas_prata else 0
+    altura_total = t_ouro * 1.15 + len(linhas_prata) * t_prata * 1.12 + 50
+    y = int(A * 0.5 - altura_total / 2)
+    y += _linha_metalica(tela, linha_ouro, cx, y, t_ouro, OURO) - 6
+    for l in linhas_prata:
+        y += _linha_metalica(tela, l, cx, y, t_prata, PRATA, contorno=(20, 22, 28)) - 8
+    _ornamento(tela, cx, y + 24, int(largura * 0.92))
+    return _salvar(tela, destino)

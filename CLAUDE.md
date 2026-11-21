@@ -156,6 +156,13 @@ Se o canal não for dito, perguntar. Campos "[preencher]": perguntar ao dono, nu
   diferentes para o Testar e comparar do YouTube: `rosto` (personagem GENÉRICO expressivo, nunca pessoa real),
   `objeto` (símbolo do tema) e `antes_depois`. Conceitos em `projetos/<pasta>/conceitos_thumb.json`. O estilo
   antigo "cinema" (`thumb_ia.py`) continua disponível.
+  - Impérios Caídos (referência do dono em 2026-11-21, thumb do próprio canal youtu.be/LbIO0YgQ3jQ): estilo
+    `epico` em `thumb_impacto.py`: cenário de cinema na thumb inteira + personagem GENÉRICO gerado à parte,
+    recortado e posto grande do lado oposto ao texto (luz de contorno suave, sem contorno de adesivo), gradação
+    azul-petróleo/laranja; texto em Cinzel Black (`fontes/`, OFL): 1a linha dourada metálica com reticências
+    ("MIL AÑOS..."), 1-2 linhas prateadas, ornamento dourado. Frases curtas = letras grandes. Fazer 3-4 opções.
+    O gerador grátis erra roupa e época (marinheiro de uniforme moderno, chapéu de fantasia): conferir cada uma
+    e descrever o personagem com época, roupa e expressão.
 - Vídeo de HISTÓRIA com a voz gravada pelo dono: fundo contínuo de paisagens de drone + legenda palavra a palavra
   (`python -m automacao.historia projetos\<pasta> campo castelo floresta montanha`; antes, uma vez:
   `python -m automacao.paisagens restaurar` para baixar os clipes). Documentário com a voz do dono:
