@@ -184,3 +184,8 @@ Se o canal não for dito, perguntar. Campos "[preencher]": perguntar ao dono, nu
   prédios). Sempre abrir a folha e trocar: pessoa real -> foto real boa do próprio vídeo; resto -> animação.
 - Na nuvem o Wikimedia libera cerca de 1 download por minuto: 135 cenas levaram ~2 h e 30 falharam. Planejar
   mais animações (~40%) e reaproveitar fotos boas em vez de insistir; a 2a rodada quase não rendeu.
+- Dois vídeos de uma vez (2026-11-21, Astecas e Cartago): nunca rodar duas buscas de fotos ao mesmo tempo (passa de
+  3 pedidos simultâneos ao Wikimedia). Fluxo que funcionou: roteiro e narração dos dois; animações de ambos em
+  paralelo (Pollinations não é Wikimedia); fotos de um vídeo por vez, só ~25-30 cenas-chave por vídeo (o resto
+  animação); thumbs no AI Horde em paralelo. Cerca de 5 h para os dois. Conferir sempre a folha (vieram foto de
+  foguete, satélite, jornal e cocar de índio norte-americano num guerreiro tlaxcalteca na thumb).
