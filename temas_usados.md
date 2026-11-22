@@ -17,3 +17,5 @@ tinha antes desta lista é permitido. Antes de propor um tema novo, conferir est
 ## Le Disciple du Savoir (francês)
 | Data | Tipo | Tema | Pasta |
 |---|---|---|---|
+| 2026-11-22 | meditação | Meditação guiada estoica da noite (Sêneca, De ira III 36; Marco Aurélio; Epicteto) | projetos/disciple-meditation-stoique |
+| 2026-11-22 | livro | Viktor Frankl, "Découvrir un sens à sa vie" (Em busca de sentido) | projetos/disciple-frankl |
