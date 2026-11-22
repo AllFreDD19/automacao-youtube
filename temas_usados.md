@@ -11,6 +11,8 @@ tinha antes desta lista é permitido. Antes de propor um tema novo, conferir est
 | 2026-11-20 | histórico | Queda de Constantinopla (1453) | projetos/imperios-constantinopla |
 | 2026-11-21 | histórico | Queda do Império Asteca (1521) | projetos/imperios-astecas |
 | 2026-11-21 | histórico | Destruição de Cartago (146 a.C.) | projetos/imperios-cartago |
+| 2026-11-22 | antigo/planeta | Pompeia e o Vesúvio (79 d.C.) | projetos/imperios-pompeya |
+| 2026-11-22 | ATUAL | Guerra na Ucrânia: de 1991 a novembro de 2026 | projetos/imperios-ucrania |
 
 ## Le Disciple du Savoir (francês)
 | Data | Tipo | Tema | Pasta |
