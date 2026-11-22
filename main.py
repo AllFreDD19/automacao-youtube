@@ -162,6 +162,10 @@ def cmd_editar(a):
     if creditos:
         texto += ["Image and footage credits:",
                   *[f"- {c['arquivo']} by {c['autor']}, {c['licenca']}, {c['url']}" for c in creditos], ""]
+    # Fontes consultadas (artigos e sites de referência): pedido do dono em 2026-11-22, em todo vídeo
+    if r.get("fontes"):
+        rotulo_f = {"es": "Fuentes", "fr": "Sources", "en": "Sources", "it": "Fonti"}.get(r.get("idioma_codigo"), "Fontes")
+        texto += [f"{rotulo_f}:", *[f"- {f}" for f in r["fontes"]], ""]
     if r.get("musica_creditos"):
         texto += ["Music:", *r["musica_creditos"], ""]
     texto.append("Tags: " + ", ".join(r.get("tags", [])))

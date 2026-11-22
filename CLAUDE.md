@@ -56,6 +56,10 @@ Se o canal não for dito, perguntar. Campos "[preencher]": perguntar ao dono, nu
   data ("hasta noviembre de 2026"); nunca confiar só na memória do modelo, que tem data de corte.
 - Temas já feitos: `temas_usados.md` (não repetir os dessa lista; atualizar a cada vídeo).
 - O dono lê o roteiro antes da edição quando quiser: mandar o roteiro assim que ficar pronto.
+- Toda descrição leva a seção "Fuentes" (pedido do dono em 2026-11-22): sites e artigos de referência usados no
+  roteiro, em `projetos/<pasta>/fontes.json` (copiar para o campo "fontes" do roteiro.json antes do `editar`, que
+  monta a seção). Conferir que cada link abre (com o User-Agent da ferramenta; sites que bloqueiam robôs: trocar por
+  outra fonte, nunca fingir ser navegador). Fontes antigas (Polibio, Bernal Díaz...) entram pelo nome da obra.
 
 ### Fora da Missão (nome sugerido; @handle e ID: [preencher]; ainda não criado)
 - Tema: gameplay do dono em vídeos de tutorial ou demonstração (explicar missão, mostrar o que dá para fazer ou o que existe no jogo).
