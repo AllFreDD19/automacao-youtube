@@ -204,3 +204,7 @@ Se o canal não for dito, perguntar. Campos "[preencher]": perguntar ao dono, nu
   paralelo (Pollinations não é Wikimedia); fotos de um vídeo por vez, só ~25-30 cenas-chave por vídeo (o resto
   animação); thumbs no AI Horde em paralelo. Cerca de 5 h para os dois. Conferir sempre a folha (vieram foto de
   foguete, satélite, jornal e cocar de índio norte-americano num guerreiro tlaxcalteca na thumb).
+- Le Disciple (2026-11-22, meditação estoica e Frankl): o Whisper pulou os primeiros ~26 s da narração (cena 1 ficou com
+  28 s e as seguintes quase sem áudio): conferir a duração das 3 primeiras cenas depois do `alinhar`. Animações de troca
+  não podem se chamar `cena_XXX_b.jpg` (é o nome do segundo visual das falas longas). O Wikimedia de novo trouxe
+  Wernher von Braun para "busto"/"Türkheim" e uma estação meteorológica: abrir sempre a folha, inclusive os segundos visuais.
