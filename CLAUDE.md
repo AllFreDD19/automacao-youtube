@@ -36,7 +36,9 @@ Se o canal não for dito, perguntar. Campos "[preencher]": perguntar ao dono, nu
 - Abertura fixa (jingle) em todo vídeo. CTA padrão: "Rejoignez la communauté des personnes qui pensent différemment".
 - Entregáveis por vídeo: roteiro, título principal + 3 alternativas, miniatura, 25 prompts de imagens em ordem cronológica
   (alternando o Disciple da biblioteca e imagens conceituais), descrição com 6 hashtags, anúncio para a comunidade.
-- Temas: nunca repetir os já usados (lista de temas no histórico do canal).
+- Temas: nunca repetir os já usados (lista de temas no histórico do canal e em `temas_usados.md`).
+- Pauta (pedido do dono em 2026-11-22): 2 vídeos por dia. Um de filosofia, sociologia, cultura ou meditação
+  (guiada) e um de releitura/análise de um livro.
 - Tamanho: vídeos de 15 ou 30 minutos (ver "Tamanho dos roteiros"). Meta: 1.000 inscritos; 1 a 2 vídeos por dia.
 
 ### Impérios Caídos (@imperioscaidosofficial, ID UCZpm9Q4UMAOhZQ0erHwrWug)
@@ -47,6 +49,13 @@ Se o canal não for dito, perguntar. Campos "[preencher]": perguntar ao dono, nu
   dono em 2026-11-20; até então era sem música); o vídeo da URSS ficou como está.
 - Formato: Prompt Mestre completo (4 capítulos, 3 CTAs).
 - Tamanho: vídeos de 15 ou 30 minutos (ver "Tamanho dos roteiros"). Meta: 1.000 inscritos; 1 a 2 vídeos por dia.
+- Pauta (pedido do dono em 2026-11-22): 2 vídeos por dia. Um de tema antigo/atemporal (história, mito ou lenda
+  antiga, o nosso planeta, um herói, o universo) e um de tema ATUAL (ex.: guerra na Ucrânia, um grande ataque
+  hacker). O atual não precisa ser do dia: começa explicando por que aquilo acontece, o que ocorreu até agora e por
+  que continua; pode passar de 15 min se precisar. Fatos recentes: pesquisar na web na hora (WebSearch) e citar a
+  data ("hasta noviembre de 2026"); nunca confiar só na memória do modelo, que tem data de corte.
+- Temas já feitos: `temas_usados.md` (não repetir os dessa lista; atualizar a cada vídeo).
+- O dono lê o roteiro antes da edição quando quiser: mandar o roteiro assim que ficar pronto.
 
 ### Fora da Missão (nome sugerido; @handle e ID: [preencher]; ainda não criado)
 - Tema: gameplay do dono em vídeos de tutorial ou demonstração (explicar missão, mostrar o que dá para fazer ou o que existe no jogo).
