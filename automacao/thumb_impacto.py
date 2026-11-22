@@ -263,10 +263,30 @@ OURO = [(255, 246, 190), (255, 214, 90), (214, 150, 30), (150, 92, 18)]
 PRATA = [(255, 255, 255), (236, 238, 242), (190, 196, 206), (150, 156, 168)]
 
 
+# Estilos de texto das thumbs épicas (pedido do dono em 2026-11-22: as thumbs estavam parecidas demais). Cada opção
+# de um vídeo usa um estilo diferente e a combinação muda de vídeo para vídeo. Fontes do Google Fonts (OFL, fontes/).
+ESTILOS_EPICOS = {
+    "imperial": {"fonte": "Cinzel-Black.ttf", "l1": OURO, "l2": PRATA, "c1": (40, 22, 6), "c2": (20, 22, 28), "orn": (232, 178, 60)},
+    "fogo": {"fonte": "PlayfairDisplay-Black.ttf", "l1": [(255, 244, 190), (255, 176, 40), (226, 78, 22), (128, 24, 10)],
+             "l2": [(255, 250, 236), (240, 226, 196), (206, 186, 150)], "c1": (50, 10, 4), "c2": (40, 18, 8), "orn": (255, 140, 40)},
+    "gelo": {"fonte": "Oswald-Bold.ttf", "l1": [(244, 252, 255), (156, 214, 255), (62, 142, 222), (24, 70, 140)],
+             "l2": [(255, 255, 255), (222, 232, 244), (176, 190, 210)], "c1": (6, 18, 40), "c2": (8, 16, 30), "orn": (140, 200, 255)},
+    "sangue": {"fonte": "CinzelDecorative-Black.ttf", "l1": [(255, 206, 196), (224, 44, 44), (142, 12, 16), (70, 4, 8)],
+               "l2": OURO, "c1": (30, 2, 4), "c2": (40, 22, 6), "orn": (232, 178, 60)},
+    "bronze": {"fonte": "Marcellus-Regular.ttf", "l1": [(255, 240, 214), (250, 186, 120), (214, 128, 64), (150, 76, 32)],
+               "l2": [(255, 252, 240), (238, 230, 210), (200, 188, 160)], "c1": (40, 16, 4), "c2": (36, 26, 14), "orn": (214, 130, 70)},
+    "manchete": {"fonte": "BebasNeue-Regular.ttf", "l1": [(255, 248, 170), (255, 222, 40), (240, 180, 0)],
+                 "l2": [(255, 255, 255), (236, 236, 236)], "c1": (20, 14, 0), "c2": (10, 10, 10), "orn": (255, 214, 0)},
+    "classico": {"fonte": "AbrilFatface-Regular.ttf", "l1": [(232, 255, 224), (126, 206, 126), (40, 122, 72), (14, 60, 34)],
+                 "l2": OURO, "c1": (6, 28, 14), "c2": (40, 22, 6), "orn": (232, 178, 60)},
+}
+_fonte_atual = [FONTE_EPICA]
+
+
 def _fonte_epica(tamanho):
     from PIL import ImageFont
     try:
-        return ImageFont.truetype(str(FONTE_EPICA), tamanho)
+        return ImageFont.truetype(str(_fonte_atual[0]), tamanho)
     except OSError:
         return _fonte(tamanho)
 
@@ -448,7 +468,7 @@ def ia_horde_lote(prompts, largura=1536, altura=640, passos=30, limite_s=1800):
     return [prontos.get(i) if i else None for i in ids]
 
 
-def epicos(pasta, opcoes, lado_texto="direita", numeros=None):
+def epicos(pasta, opcoes, lado_texto="direita", numeros=None, estilos=None):
     """Várias opções de thumb épica de uma vez (todas as cenas pedidas juntas ao AI Horde).
     opcoes: [{"cena": "...", "ouro": "MIL AÑOS...", "prata": ["Y CAYÓ EN", "UNA MAÑANA"]}, ...]"""
     lado_pessoa = "left" if lado_texto == "direita" else "right"
@@ -465,12 +485,17 @@ def epicos(pasta, opcoes, lado_texto="direita", numeros=None):
             im = ia(pr, 1680, 720, semente=n)
         destino = Path(pasta) / f"thumb_epica_{n}.jpg"
         im.save(Path(pasta) / f"thumb_epica_{n}_cena.jpg", quality=95)  # para reajustar texto sem gerar de novo
-        epico(destino, o["cena"], o["ouro"], o["prata"], lado_texto, imagem=im)
+        # Estilos diferentes em cada opção, e começando num ponto diferente para cada vídeo
+        nomes = list(ESTILOS_EPICOS)
+        base = sum(map(ord, Path(pasta).name)) % len(nomes)
+        estilo = (estilos[n - 1] if estilos and n - 1 < len(estilos) else o.get("estilo")) or nomes[(base + 3 * (n - 1)) % len(nomes)]
+        epico(destino, o["cena"], o["ouro"], o["prata"], lado_texto, imagem=im, estilo=estilo)
         saidas.append(destino)
     return saidas
 
 
-def epico(destino, cena, linha_ouro, linhas_prata, lado_texto="direita", semente=1, personagem=None, imagem=None):
+def epico(destino, cena, linha_ouro, linhas_prata, lado_texto="direita", semente=1, personagem=None, imagem=None,
+          estilo="imperial"):
     """Thumb no estilo do canal: cena inteira + personagem grande do lado oposto ao texto + texto épico metálico.
     imagem: cena já gerada (AI Horde); personagem: GENÉRICO, gerado à parte e recortado (nunca pessoa real)."""
     lado_pessoa = "left" if lado_texto == "direita" else "right"
@@ -502,12 +527,15 @@ def epico(destino, cena, linha_ouro, linhas_prata, lado_texto="direita", semente
         while t > 30 and d.textlength(txt, font=_fonte_epica(t)) > largura:
             t -= 4
         return t
+    est = ESTILOS_EPICOS.get(estilo, ESTILOS_EPICOS["imperial"])
+    _fonte_atual[0] = config.PASTA_FONTES / est["fonte"]
     t_ouro = cabe(linha_ouro, 170)
     t_prata = min(cabe(l, int(t_ouro * 0.72)) for l in linhas_prata) if linhas_prata else 0
     altura_total = t_ouro * 1.15 + len(linhas_prata) * t_prata * 1.12 + 50
     y = int(A * 0.5 - altura_total / 2)
-    y += _linha_metalica(tela, linha_ouro, cx, y, t_ouro, OURO) - 6
+    y += _linha_metalica(tela, linha_ouro, cx, y, t_ouro, est["l1"], contorno=est["c1"]) - 6
     for l in linhas_prata:
-        y += _linha_metalica(tela, l, cx, y, t_prata, PRATA, contorno=(20, 22, 28)) - 8
-    _ornamento(tela, cx, y + 24, int(largura * 0.92))
+        y += _linha_metalica(tela, l, cx, y, t_prata, est["l2"], contorno=est["c2"]) - 8
+    _ornamento(tela, cx, y + 24, int(largura * 0.92), cor=est["orn"])
+    print(f"  {Path(destino).name}: estilo {estilo}")
     return _salvar(tela, destino)
