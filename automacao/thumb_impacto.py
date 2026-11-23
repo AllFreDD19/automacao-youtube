@@ -428,15 +428,24 @@ NEGATIVO = ("cartoon, anime, illustration, painting, 3d render, text, letters, w
             "extra limbs, blurry face, modern clothes, sunglasses")
 
 
-def ia_horde_lote(prompts, largura=1536, altura=640, passos=30, limite_s=1800):
-    """Pede todas as imagens de uma vez ao AI Horde e espera; devolve uma lista de PIL.Image (None se falhou)."""
+def ia_horde_lote(prompts, largura=1536, altura=640, passos=30, limite_s=1800, fontes=None, forca=0.55):
+    """Pede todas as imagens de uma vez ao AI Horde e espera; devolve uma lista de PIL.Image (None se falhou).
+    fontes: lista (mesmo tamanho de prompts) de imagens de partida (img2img; None = só texto); forca = quanto a IA
+    pode mudar a imagem de partida (0.3 quase igual, 0.7 muda muito; o rosto se perde acima de ~0.5)."""
     import os
     cab = {"apikey": os.getenv("AI_HORDE_KEY") or "0000000000", "Client-Agent": f"automacao-youtube:1.1:{config.USER_AGENT.split('(')[1].split(')')[0]}"}
     ids = []
-    for pr in prompts:
+    for k, pr in enumerate(prompts):
         corpo = {"prompt": f"{pr} ### {NEGATIVO}", "models": [HORDE_MODELO], "r2": True, "nsfw": False,
                  "censor_nsfw": True, "params": {"width": largura, "height": altura, "steps": passos, "cfg_scale": 6,
                                                  "sampler_name": "k_euler_a", "n": 1}}
+        if fontes and fontes[k] is not None:
+            import base64
+            buf = io.BytesIO()
+            Image.open(fontes[k]).convert("RGB").resize((largura, altura)).save(buf, "WEBP", quality=92)
+            corpo["source_image"] = base64.b64encode(buf.getvalue()).decode()
+            corpo["source_processing"] = "img2img"
+            corpo["params"]["denoising_strength"] = forca
         try:
             r = requests.post(f"{HORDE}/generate/async", json=corpo, headers=cab, timeout=60)
             ids.append(r.json().get("id") if r.ok else None)
@@ -548,6 +557,11 @@ def epico(destino, cena, linha_ouro, linhas_prata, lado_texto="direita", semente
 # sem pessoas), fundido em degradê. Texto como nas referências: palavra grande dourada metálica (Cinzel Black),
 # ornamento dourado e o nome do autor/tema em prateado espaçado embaixo.
 PASTA_DISCIPLE = config.RAIZ / "biblioteca" / "disciple"
+# Versão curta (cabe no limite de ~75 palavras do SDXL) do prompt fixo do personagem: biblioteca/disciple/personagem.md
+DISCIPLE_PROMPT = ("photo of a mature European scholar about 60 years old, long oval face, high wrinkled forehead, "
+                   "thick curly dark-brown hair with heavy silver at the temples, thick dark eyebrows, deep-set "
+                   "hazel-green eyes, straight slightly broad nose, dense curly salt-and-pepper beard and thick "
+                   "mustache, weathered olive skin with pores and wrinkles, calm intelligent penetrating gaze")
 FUNDO_DISCIPLE = ("dark old library at night lit by candles, shelves of antique leather books, a marble bust of a "
                   "philosopher in the shadows, brass armillary sphere, warm golden candle light, dust in the air, "
                   "no people, cinematic, photorealistic, highly detailed")
@@ -572,12 +586,13 @@ def _espacado(txt):
 
 
 def disciple(destino, personagem, palavra, autor=None, lado_texto="esquerda", fundo=None, inicio=0.42, fim=0.58,
-             y_centro=0.5, tom=None):
+             y_centro=0.5, tom=None, area=None):
     """personagem: imagem do Disciple (o lado dele é mantido como está); lado_texto: onde vai o texto (o lado
     oposto ao personagem). palavra: 1-2 palavras grandes em dourado (pode ter quebra com '\\n'); autor: linha
     prateada pequena (ex.: 'SÉNÈQUE'). Linha que começa com '~' sai prateada (ex.: '~LE CARNET SECRET\nDE
     L'EMPEREUR'). y_centro: altura do bloco de texto (0.3 = terço de cima). tom: cor (r, g, b) misturada nas sombras
-    para dar o clima do tema (ex.: (70, 20, 90) = púrpura imperial)."""
+    para dar o clima do tema (ex.: (70, 20, 90) = púrpura imperial). area: (x0, y0, x1, y1) em frações: troca só
+    esse retângulo (bordas esfumadas) pelo fundo novo, para não cortar mão ou ombro que invadem o lado do texto."""
     base = cobrir(Image.open(personagem).convert("RGB"))
     if fundo:
         f = cobrir(Image.open(fundo).convert("RGB"))
@@ -592,6 +607,12 @@ def disciple(destino, personagem, palavra, autor=None, lado_texto="esquerda", fu
         mascara = linha.resize((L, A))
         if lado_texto == "direita":
             mascara = mascara.transpose(Image.FLIP_LEFT_RIGHT)
+        if area:
+            mascara = Image.new("L", (L, A), 0)
+            for x0, y0, x1, y1 in (area if isinstance(area[0], (list, tuple)) else [area]):
+                ImageDraw.Draw(mascara).rectangle([int(x0 * L) - 22, int(y0 * A) - 22, int(x1 * L) + 22,
+                                                   int(y1 * A) + 22], fill=255)
+            mascara = mascara.filter(ImageFilter.GaussianBlur(18))
         base = Image.composite(f, base, mascara)
     if tom:
         cinza = base.convert("L")
