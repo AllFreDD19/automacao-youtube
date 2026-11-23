@@ -36,7 +36,12 @@ Se o canal não for dito, perguntar. Campos "[preencher]": perguntar ao dono, nu
 - Abertura fixa (jingle) em todo vídeo. CTA padrão: "Rejoignez la communauté des personnes qui pensent différemment".
 - Entregáveis por vídeo: roteiro, título principal + 3 alternativas, miniatura, 25 prompts de imagens em ordem cronológica
   (alternando o Disciple da biblioteca e imagens conceituais), descrição com 6 hashtags, anúncio para a comunidade.
-- Temas: nunca repetir os já usados (lista de temas no histórico do canal e em `temas_usados.md`).
+- Thumbs (pedido do dono em 2026-11-23): personagem SEMPRE o Disciple exato (prompt fixo em
+  `biblioteca/disciple/personagem.md`, referência oficial `referencias/ref_8.png`). O gerador grátis daqui NÃO repete o
+  rosto (testado: só com o prompt sai outro homem; partindo da foto, o rosto muda): a thumb usa uma imagem real dele
+  (`referencias/`) e troca só o lado do texto (`thumb_impacto.disciple`, ver `biblioteca/disciple/LEIA.md`): palavra
+  grande dourada, ornamento, autor em prateado. Poses novas: o dono gera no ChatGPT com o prompt fixo + referência
+  anexada, SEM texto. Não usar ref_7 (outro homem).
 - Pauta (pedido do dono em 2026-11-22): 2 vídeos por dia. Um de filosofia, sociologia, cultura ou meditação
   (guiada) e um de releitura/análise de um livro.
 - Tamanho: vídeos de 15 ou 30 minutos (ver "Tamanho dos roteiros"). Meta: 1.000 inscritos; 1 a 2 vídeos por dia.
