@@ -539,3 +539,82 @@ def epico(destino, cena, linha_ouro, linhas_prata, lado_texto="direita", semente
     _ornamento(tela, cx, y + 24, int(largura * 0.92), cor=est["orn"])
     print(f"  {Path(destino).name}: estilo {estilo}")
     return _salvar(tela, destino)
+
+
+# ---------------------------------------------------------------- estilo "disciple" (Le Disciple du Savoir)
+# Pedido do dono (2026-11-23): o personagem tem que ser EXATAMENTE o Disciple criado para o canal (sábio de barba
+# grisalha, manto escuro). Gerador grátis não repete um rosto, então a thumb usa SEMPRE uma imagem real do personagem
+# (biblioteca/disciple/): o lado dele fica intacto e o outro lado recebe um fundo de biblioteca à luz de velas (AI Horde,
+# sem pessoas), fundido em degradê. Texto como nas referências: palavra grande dourada metálica (Cinzel Black),
+# ornamento dourado e o nome do autor/tema em prateado espaçado embaixo.
+PASTA_DISCIPLE = config.RAIZ / "biblioteca" / "disciple"
+FUNDO_DISCIPLE = ("dark old library at night lit by candles, shelves of antique leather books, a marble bust of a "
+                  "philosopher in the shadows, brass armillary sphere, warm golden candle light, dust in the air, "
+                  "no people, cinematic, photorealistic, highly detailed")
+
+
+def fundos_disciple(qtd=3):
+    """Gera (uma vez) fundos de biblioteca sem pessoas em biblioteca/disciple/fundos/."""
+    pasta = PASTA_DISCIPLE / "fundos"
+    pasta.mkdir(parents=True, exist_ok=True)
+    existentes = sorted(pasta.glob("fundo_*.jpg"))
+    if len(existentes) >= qtd:
+        return existentes
+    imgs = ia_horde_lote([FUNDO_DISCIPLE + f", variation {i}" for i in range(qtd - len(existentes))], 1344, 768)
+    for i, im in enumerate(imgs):
+        if im is not None:
+            im.save(pasta / f"fundo_{len(existentes) + i + 1}.jpg", quality=95)
+    return sorted(pasta.glob("fundo_*.jpg"))
+
+
+def _espacado(txt):
+    return " ".join(txt)
+
+
+def disciple(destino, personagem, palavra, autor=None, lado_texto="esquerda", fundo=None, inicio=0.42, fim=0.58):
+    """personagem: imagem do Disciple (o lado dele é mantido como está); lado_texto: onde vai o texto (o lado
+    oposto ao personagem). palavra: 1-2 palavras grandes em dourado (pode ter quebra com '\\n'); autor: linha
+    prateada pequena (ex.: 'SÉNÈQUE')."""
+    base = cobrir(Image.open(personagem).convert("RGB"))
+    if fundo:
+        f = cobrir(Image.open(fundo).convert("RGB"))
+        if lado_texto == "direita":
+            f = f.transpose(Image.FLIP_LEFT_RIGHT)
+        # máscara: 255 = fundo novo (lado do texto), 0 = imagem do personagem; degradê no meio
+        grad = Image.linear_gradient("L").rotate(90).resize((L, A))  # 255 à esquerda -> 0 à direita
+        a0, a1 = int(L * inicio), int(L * fim)
+        lut = [255 if x <= a0 else 0 if x >= a1 else int(255 * (a1 - x) / (a1 - a0)) for x in range(L)]
+        linha = Image.new("L", (L, 1))
+        linha.putdata(lut)
+        mascara = linha.resize((L, A))
+        if lado_texto == "direita":
+            mascara = mascara.transpose(Image.FLIP_LEFT_RIGHT)
+        base = Image.composite(f, base, mascara)
+    tela = base.convert("RGBA")
+    # escurece o lado do texto para as letras saltarem
+    grad = Image.linear_gradient("L").rotate(-90 if lado_texto == "esquerda" else 90).resize((L, A))
+    escuro = Image.new("RGBA", (L, A), (0, 0, 0, 0))
+    escuro.putalpha(grad.point(lambda v: int(max(0, v - 120) * 0.8)))
+    tela.alpha_composite(escuro)
+    cx = int(L * 0.27) if lado_texto == "esquerda" else int(L * 0.73)
+    largura = int(L * 0.48)
+    d = ImageDraw.Draw(tela)
+    _fonte_atual[0] = config.PASTA_FONTES / "Cinzel-Black.ttf"
+
+    def cabe(txt, maximo):
+        t = maximo
+        while t > 30 and d.textlength(txt, font=_fonte_epica(t)) > largura:
+            t -= 4
+        return t
+    linhas = palavra.split("\n")
+    t_ouro = min(cabe(l, 150) for l in linhas)
+    t_autor = cabe(_espacado(autor), 46) if autor else 0
+    altura = len(linhas) * t_ouro * 1.12 + (t_autor * 1.6 + 40 if autor else 0) + 40
+    y = int(A * 0.5 - altura / 2)
+    for l in linhas:
+        y += _linha_metalica(tela, l, cx, y, t_ouro, OURO, contorno=(40, 22, 6)) - 8
+    _ornamento(tela, cx, y + 22, int(largura * 0.95))
+    if autor:
+        _linha_metalica(tela, _espacado(autor), cx, y + 50, t_autor, PRATA, contorno=(20, 22, 28))
+    print(f"  {Path(destino).name}: estilo disciple")
+    return _salvar(tela, destino)
