@@ -571,10 +571,13 @@ def _espacado(txt):
     return " ".join(txt)
 
 
-def disciple(destino, personagem, palavra, autor=None, lado_texto="esquerda", fundo=None, inicio=0.42, fim=0.58):
+def disciple(destino, personagem, palavra, autor=None, lado_texto="esquerda", fundo=None, inicio=0.42, fim=0.58,
+             y_centro=0.5, tom=None):
     """personagem: imagem do Disciple (o lado dele é mantido como está); lado_texto: onde vai o texto (o lado
     oposto ao personagem). palavra: 1-2 palavras grandes em dourado (pode ter quebra com '\\n'); autor: linha
-    prateada pequena (ex.: 'SÉNÈQUE')."""
+    prateada pequena (ex.: 'SÉNÈQUE'). Linha que começa com '~' sai prateada (ex.: '~LE CARNET SECRET\nDE
+    L'EMPEREUR'). y_centro: altura do bloco de texto (0.3 = terço de cima). tom: cor (r, g, b) misturada nas sombras
+    para dar o clima do tema (ex.: (70, 20, 90) = púrpura imperial)."""
     base = cobrir(Image.open(personagem).convert("RGB"))
     if fundo:
         f = cobrir(Image.open(fundo).convert("RGB"))
@@ -590,6 +593,10 @@ def disciple(destino, personagem, palavra, autor=None, lado_texto="esquerda", fu
         if lado_texto == "direita":
             mascara = mascara.transpose(Image.FLIP_LEFT_RIGHT)
         base = Image.composite(f, base, mascara)
+    if tom:
+        cinza = base.convert("L")
+        sombra = cinza.point(lambda v: int(max(0, 150 - v) * 0.9))  # mais forte nas partes escuras
+        base = Image.composite(Image.new("RGB", (L, A), tom), base, sombra)
     tela = base.convert("RGBA")
     # escurece o lado do texto para as letras saltarem
     grad = Image.linear_gradient("L").rotate(-90 if lado_texto == "esquerda" else 90).resize((L, A))
@@ -607,12 +614,14 @@ def disciple(destino, personagem, palavra, autor=None, lado_texto="esquerda", fu
             t -= 4
         return t
     linhas = palavra.split("\n")
-    t_ouro = min(cabe(l, 150) for l in linhas)
+    t_ouro = min(cabe(l.lstrip("~"), 150) for l in linhas)
     t_autor = cabe(_espacado(autor), 46) if autor else 0
     altura = len(linhas) * t_ouro * 1.12 + (t_autor * 1.6 + 40 if autor else 0) + 40
-    y = int(A * 0.5 - altura / 2)
+    y = max(20, int(A * y_centro - altura / 2))
     for l in linhas:
-        y += _linha_metalica(tela, l, cx, y, t_ouro, OURO, contorno=(40, 22, 6)) - 8
+        prata = l.startswith("~")
+        y += _linha_metalica(tela, l.lstrip("~"), cx, y, t_ouro, PRATA if prata else OURO,
+                             contorno=(20, 22, 28) if prata else (40, 22, 6)) - 8
     _ornamento(tela, cx, y + 22, int(largura * 0.95))
     if autor:
         _linha_metalica(tela, _espacado(autor), cx, y + 50, t_autor, PRATA, contorno=(20, 22, 28))
