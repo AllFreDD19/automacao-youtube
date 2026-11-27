@@ -13,9 +13,13 @@ tinha antes desta lista é permitido. Antes de propor um tema novo, conferir est
 | 2026-11-21 | histórico | Destruição de Cartago (146 a.C.) | projetos/imperios-cartago |
 | 2026-11-22 | antigo/planeta | Pompeia e o Vesúvio (79 d.C.) | projetos/imperios-pompeya |
 | 2026-11-22 | ATUAL | Guerra na Ucrânia: de 1991 a novembro de 2026 | projetos/imperios-ucrania |
+| 2026-11-27 | antigo/mito | Atlântida (Platão, Santorini, Hélice) | projetos/imperios-atlantida |
+| 2026-11-27 | ATUAL | China x Taiwan: de 1949 a novembro de 2026 | projetos/imperios-taiwan |
 
 ## Le Disciple du Savoir (francês)
 | Data | Tipo | Tema | Pasta |
 |---|---|---|---|
 | 2026-11-22 | meditação | Meditação guiada estoica da noite (Sêneca, De ira III 36; Marco Aurélio; Epicteto) | projetos/disciple-meditation-stoique |
 | 2026-11-22 | livro | Viktor Frankl, "Découvrir un sens à sa vie" (Em busca de sentido) | projetos/disciple-frankl |
+| 2026-11-27 | meditação | Meditação guiada contra a ansiedade (Marco Aurélio, Epicteto, Epicuro, Pascal) | projetos/disciple-anxiete |
+| 2026-11-27 | livro | Sêneca, "De la brièveté de la vie" | projetos/disciple-brievete |

@@ -213,3 +213,9 @@ Se o canal não for dito, perguntar. Campos "[preencher]": perguntar ao dono, nu
   28 s e as seguintes quase sem áudio): conferir a duração das 3 primeiras cenas depois do `alinhar`. Animações de troca
   não podem se chamar `cena_XXX_b.jpg` (é o nome do segundo visual das falas longas). O Wikimedia de novo trouxe
   Wernher von Braun para "busto"/"Türkheim" e uma estação meteorológica: abrir sempre a folha, inclusive os segundos visuais.
+- Entrega (pedido do dono em 2026-11-27): o `editar` renomeia o vídeo para o título (`<título>.mp4`) e grava `<título>.txt` com
+  título, 3 alternativos (`titulos_alternativos` no roteiro.json) e a descrição completa. Le Disciple: o Disciple entra nos
+  vídeos com as imagens de `biblioteca/disciple/limpas/` (~6 cenas: abertura, CTAs, final).
+- 4 vídeos de uma vez (2026-11-27): o Wikimedia passou a responder 429 com espera de 600 s: ~1 foto a cada 20 min, e a
+  busca automática caiu em fotos da NASA e erradas (von Braun, coletiva da NASA, MLK, Atacama, um gato no lugar de Pascal).
+  Revisar TODA a folha; trocar por animação sem pessoa quando o retrato não chegar, sem esperar horas.
