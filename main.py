@@ -12,6 +12,7 @@ Uso rápido:
   python main.py tudo --referencia "título ou link"  faz tudo de uma vez
 """
 import argparse
+from pathlib import Path
 import json
 import re
 import sys
@@ -166,11 +167,35 @@ def cmd_editar(a):
     if r.get("fontes"):
         rotulo_f = {"es": "Fuentes", "fr": "Sources", "en": "Sources", "it": "Fonti"}.get(r.get("idioma_codigo"), "Fontes")
         texto += [f"{rotulo_f}:", *[f"- {f}" for f in r["fontes"]], ""]
+    if any(c.get("visual") == "animacao" or c.get("visual_tipo") == "animacao" for c in r["cenas"]):
+        texto += [{"es": "Algunas imágenes ilustrativas fueron generadas con IA.",
+                   "fr": "Certaines images d'illustration ont été générées par IA.",
+                   "en": "Some illustrative images were generated with AI."}.get(r.get("idioma_codigo"),
+                  "Algumas imagens ilustrativas foram geradas com IA."), ""]
     if r.get("musica_creditos"):
         texto += ["Music:", *r["musica_creditos"], ""]
     texto.append("Tags: " + ", ".join(r.get("tags", [])))
     (p / "descricao_youtube.txt").write_text("\n".join(texto), encoding="utf-8")
-    print(f"\nPronto! Vídeo: {video}\nDescrição e capítulos: {p / 'descricao_youtube.txt'}")
+    video, nota = entrega(p, r, video, texto)
+    print(f"\nPronto! Vídeo: {video}\nTítulo e descrição: {nota}")
+
+
+def entrega(p, r, video, texto):
+    """Pedido do dono (2026-11-27): o vídeo sai com o nome do título e título + descrição numa nota só."""
+    import re as _re
+    nome = _re.sub(r'[<>"/\\|?*]', "", r["titulo"].replace(" :", ":").replace(":", " -"))
+    nome = _re.sub(r"\s+", " ", nome).strip().rstrip(".")[:150]
+    video = Path(video)
+    final = p / f"{nome}.mp4"
+    if video.exists() and video != final:
+        video.replace(final)
+    alt = r.get("titulos_alternativos", [])
+    nota = ["TITRE / TÍTULO:", r["titulo"], ""]
+    if alt:
+        nota += ["ALTERNATIVES / ALTERNATIVOS:", *[f"{i}. {t}" for i, t in enumerate(alt, 1)], ""]
+    nota += ["DESCRIPTION / DESCRIÇÃO:", *texto[2:]]
+    (p / f"{nome}.txt").write_text("\n".join(nota), encoding="utf-8")
+    return final, p / f"{nome}.txt"
 
 
 def cmd_apresentador(a):

@@ -586,7 +586,7 @@ def _espacado(txt):
 
 
 def disciple(destino, personagem, palavra, autor=None, lado_texto="esquerda", fundo=None, inicio=0.42, fim=0.58,
-             y_centro=0.5, tom=None, area=None):
+             y_centro=0.5, tom=None, area=None, so_imagem=False):
     """personagem: imagem do Disciple (o lado dele é mantido como está); lado_texto: onde vai o texto (o lado
     oposto ao personagem). palavra: 1-2 palavras grandes em dourado (pode ter quebra com '\\n'); autor: linha
     prateada pequena (ex.: 'SÉNÈQUE'). Linha que começa com '~' sai prateada (ex.: '~LE CARNET SECRET\nDE
@@ -618,6 +618,9 @@ def disciple(destino, personagem, palavra, autor=None, lado_texto="esquerda", fu
         cinza = base.convert("L")
         sombra = cinza.point(lambda v: int(max(0, 150 - v) * 0.9))  # mais forte nas partes escuras
         base = Image.composite(Image.new("RGB", (L, A), tom), base, sombra)
+    if so_imagem:  # imagem limpa do Disciple (sem texto) para usar nas cenas dos vídeos
+        base.save(destino, quality=95)
+        return destino
     tela = base.convert("RGBA")
     # escurece o lado do texto para as letras saltarem
     grad = Image.linear_gradient("L").rotate(-90 if lado_texto == "esquerda" else 90).resize((L, A))
