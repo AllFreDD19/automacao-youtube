@@ -190,10 +190,10 @@ def entrega(p, r, video, texto):
     if video.exists() and video != final:
         video.replace(final)
     alt = r.get("titulos_alternativos", [])
-    nota = ["TITRE / TÍTULO:", r["titulo"], ""]
+    nota = ["TÍTULO:", r["titulo"], ""]
     if alt:
-        nota += ["ALTERNATIVES / ALTERNATIVOS:", *[f"{i}. {t}" for i, t in enumerate(alt, 1)], ""]
-    nota += ["DESCRIPTION / DESCRIÇÃO:", *texto[2:]]
+        nota += ["TÍTULOS ALTERNATIVOS:", *[f"{i}. {t}" for i, t in enumerate(alt, 1)], ""]
+    nota += ["DESCRIÇÃO (copiar para o YouTube):", *texto[2:]]
     (p / f"{nome}.txt").write_text("\n".join(nota), encoding="utf-8")
     return final, p / f"{nome}.txt"
 
