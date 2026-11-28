@@ -148,8 +148,8 @@ Se o canal não for dito, perguntar. Campos "[preencher]": perguntar ao dono, nu
   - ffmpeg lendo endereço da internet na nuvem: passar `-http_proxy config.PROXY` (ele não lê HTTPS_PROXY).
 - Estilo dos documentários (aprovado em 2026-11-20, referência: canal "O Mundo e Tudo ao Redor"), Impérios e Le
   Disciple: misturado. Fotos e vídeos reais na maior parte; cenas animadas (`automacao/animacao.py`: ilustração
-  plana por IA + câmera lenta + partículas) nas cenas abstratas, de ideia, metáfora ou sem foto boa. Faixas pretas de
-  cinema no vídeo todo (legenda dentro da faixa de baixo) e texto no canto inferior esquerdo nos momentos-chave.
+  plana por IA + câmera lenta + partículas) nas cenas abstratas, de ideia, metáfora ou sem foto boa. Tela cheia 16:9
+  (1920x1080, SEM faixas pretas: pedido do dono em 2026-11-28) e texto no canto inferior esquerdo, acima da legenda.
   No roteiro.json: `"canal": "imperios"|"le-disciple"`, cena animada `"visual": "animacao"` + `"prompt_animacao"`
   (inglês) + `"efeito"` (neve, estrelas, poeira, brasas, chuva, nenhum), e `"texto_tela": ["linha pequena",
   "PALAVRA-CHAVE"]` em ~1 cena a cada 1-2 min (datas, nomes, números marcantes). Pessoa real nunca em animação.

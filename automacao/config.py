@@ -118,7 +118,7 @@ MUSICA_VOLUME = float(_env("MUSICA_VOLUME", "0.10"))
 # Clima da música padrão de cada canal (pasta musicas/<clima>/); o roteiro.json pode trocar com "tom_musica"
 MUSICA_CANAIS = {"imperios": "tenso", "le-disciple": "sereno"}
 # Canais com faixas pretas de cinema (2,39:1) e texto no canto (estilo motion design aprovado em 2026-11-20)
-CINEMA_CANAIS = {"imperios", "le-disciple"}
+CINEMA_CANAIS = set()  # dono, 2026-11-28: tela cheia 16:9 padrão do YouTube, sem faixas pretas
 LEGENDAS = _env("LEGENDAS", "sim").lower() in ("sim", "s", "true", "1")
 # Desligado por padrão desde 2026-10 (decisão do usuário); o código fica para quem quiser ligar com APRESENTADOR=sim
 APRESENTADOR = _env("APRESENTADOR", "nao").lower() in ("sim", "s", "true", "1")

@@ -210,7 +210,7 @@ def texto_png(linhas, destino, faixas=True):
     im = Image.new("RGBA", (LARGURA, ALTURA))
     d = ImageDraw.Draw(im)
     f1, f2 = config.fonte_texto(28, True), config.fonte_texto(70, True)
-    base_y = ALTURA - (FAIXA_CINEMA if faixas else 0) - 60
+    base_y = ALTURA - (FAIXA_CINEMA + 60 if faixas else 170)  # sem faixas: acima da legenda
     x = 96
     if grande:
         caixa = d.textbbox((0, 0), grande.upper(), font=f2)
