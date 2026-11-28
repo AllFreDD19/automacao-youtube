@@ -15,6 +15,8 @@ tinha antes desta lista é permitido. Antes de propor um tema novo, conferir est
 | 2026-11-22 | ATUAL | Guerra na Ucrânia: de 1991 a novembro de 2026 | projetos/imperios-ucrania |
 | 2026-11-27 | antigo/mito | Atlântida (Platão, Santorini, Hélice) | projetos/imperios-atlantida |
 | 2026-11-27 | ATUAL | China x Taiwan: de 1949 a novembro de 2026 | projetos/imperios-taiwan |
+| 2026-11-28 | antigo | Queda do Império Inca (1532) | projetos/imperios-incas |
+| 2026-11-28 | ATUAL | Guerra no Sudão: de Bashir a novembro de 2026 | projetos/imperios-sudan |
 
 ## Le Disciple du Savoir (francês)
 | Data | Tipo | Tema | Pasta |
@@ -23,3 +25,5 @@ tinha antes desta lista é permitido. Antes de propor um tema novo, conferir est
 | 2026-11-22 | livro | Viktor Frankl, "Découvrir un sens à sa vie" (Em busca de sentido) | projetos/disciple-frankl |
 | 2026-11-27 | meditação | Meditação guiada contra a ansiedade (Marco Aurélio, Epicteto, Epicuro, Pascal) | projetos/disciple-anxiete |
 | 2026-11-27 | livro | Sêneca, "De la brièveté de la vie" | projetos/disciple-brievete |
+| 2026-11-28 | livro | Hermann Hesse, "Siddhartha" | projetos/disciple-siddhartha |
+| 2026-11-28 | filosofia | Diógenes de Sinope (cínicos) | projetos/disciple-diogene |

@@ -219,3 +219,8 @@ Se o canal não for dito, perguntar. Campos "[preencher]": perguntar ao dono, nu
 - 4 vídeos de uma vez (2026-11-27): o Wikimedia passou a responder 429 com espera de 600 s: ~1 foto a cada 20 min, e a
   busca automática caiu em fotos da NASA e erradas (von Braun, coletiva da NASA, MLK, Atacama, um gato no lugar de Pascal).
   Revisar TODA a folha; trocar por animação sem pessoa quando o retrato não chegar, sem esperar horas.
+- 2026-11-28: o Wikimedia ficou o dia todo em 429 (0 fotos em horas). Alternativas que funcionaram: `automacao/museus.py`
+  (Cleveland Museum of Art e Met, CC0, sem chave: pinturas, esculturas, objetos antigos) e cenas realistas sem pessoas no
+  AI Horde quando o Pollinations erra o objeto (desenhava a jarra de Diógenes como garrafa moderna). Biografia de pessoa
+  real (Diógenes, Pizarro, Buda): animações só com objetos, lugares e multidões anônimas; a pessoa só em obra de arte antiga.
+
