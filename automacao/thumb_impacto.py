@@ -586,7 +586,7 @@ def _espacado(txt):
 
 
 def disciple(destino, personagem, palavra, autor=None, lado_texto="esquerda", fundo=None, inicio=0.42, fim=0.58,
-             y_centro=0.5, tom=None, area=None, so_imagem=False):
+             y_centro=0.5, tom=None, area=None, so_imagem=False, estilo="imperial"):
     """personagem: imagem do Disciple (o lado dele é mantido como está); lado_texto: onde vai o texto (o lado
     oposto ao personagem). palavra: 1-2 palavras grandes em dourado (pode ter quebra com '\\n'); autor: linha
     prateada pequena (ex.: 'SÉNÈQUE'). Linha que começa com '~' sai prateada (ex.: '~LE CARNET SECRET\nDE
@@ -630,7 +630,8 @@ def disciple(destino, personagem, palavra, autor=None, lado_texto="esquerda", fu
     cx = int(L * 0.27) if lado_texto == "esquerda" else int(L * 0.73)
     largura = int(L * 0.48)
     d = ImageDraw.Draw(tela)
-    _fonte_atual[0] = config.PASTA_FONTES / "Cinzel-Black.ttf"
+    est = ESTILOS_EPICOS.get(estilo, ESTILOS_EPICOS["imperial"])  # fonte e cores variam por thumb (dono, 2026-11-28)
+    _fonte_atual[0] = config.PASTA_FONTES / est["fonte"]
 
     def cabe(txt, maximo):
         t = maximo
@@ -644,10 +645,10 @@ def disciple(destino, personagem, palavra, autor=None, lado_texto="esquerda", fu
     y = max(20, int(A * y_centro - altura / 2))
     for l in linhas:
         prata = l.startswith("~")
-        y += _linha_metalica(tela, l.lstrip("~"), cx, y, t_ouro, PRATA if prata else OURO,
-                             contorno=(20, 22, 28) if prata else (40, 22, 6)) - 8
-    _ornamento(tela, cx, y + 22, int(largura * 0.95))
+        y += _linha_metalica(tela, l.lstrip("~"), cx, y, t_ouro, est["l2"] if prata else est["l1"],
+                             contorno=est["c2"] if prata else est["c1"]) - 8
+    _ornamento(tela, cx, y + 22, int(largura * 0.95), cor=est["orn"])
     if autor:
-        _linha_metalica(tela, _espacado(autor), cx, y + 50, t_autor, PRATA, contorno=(20, 22, 28))
+        _linha_metalica(tela, _espacado(autor), cx, y + 50, t_autor, est["l2"], contorno=est["c2"])
     print(f"  {Path(destino).name}: estilo disciple")
     return _salvar(tela, destino)
