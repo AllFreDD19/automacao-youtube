@@ -596,6 +596,7 @@ def disciple(destino, personagem, palavra, autor=None, lado_texto="esquerda", fu
     base = cobrir(Image.open(personagem).convert("RGB"))
     if fundo:
         f = cobrir(Image.open(fundo).convert("RGB"))
+        f = ImageEnhance.Brightness(f).enhance(0.72)  # o fundo novo fica no tom escuro das imagens do personagem
         if lado_texto == "direita":
             f = f.transpose(Image.FLIP_LEFT_RIGHT)
         # máscara: 255 = fundo novo (lado do texto), 0 = imagem do personagem; degradê no meio
@@ -610,10 +611,16 @@ def disciple(destino, personagem, palavra, autor=None, lado_texto="esquerda", fu
         if area:
             mascara = Image.new("L", (L, A), 0)
             for x0, y0, x1, y1 in (area if isinstance(area[0], (list, tuple)) else [area]):
-                ImageDraw.Draw(mascara).rectangle([int(x0 * L) - 22, int(y0 * A) - 22, int(x1 * L) + 22,
-                                                   int(y1 * A) + 22], fill=255)
-            mascara = mascara.filter(ImageFilter.GaussianBlur(18))
+                ImageDraw.Draw(mascara).rectangle([int(x0 * L) - 50, int(y0 * A) - 50, int(x1 * L) + 50,
+                                                   int(y1 * A) + 50], fill=255)
+            mascara = mascara.filter(ImageFilter.GaussianBlur(45))
         base = Image.composite(f, base, mascara)
+        if not area:  # sombra suave sobre a emenda: esconde a diferença de luz entre os dois fundos
+            meio = int(L * (inicio + fim) / 2)
+            meio = L - meio if lado_texto == "direita" else meio
+            faixa = Image.new("L", (L, A), 0)
+            ImageDraw.Draw(faixa).rectangle([meio - 70, 0, meio + 70, A], fill=150)
+            base = Image.composite(Image.new("RGB", (L, A), (0, 0, 0)), base, faixa.filter(ImageFilter.GaussianBlur(60)))
     if tom:
         cinza = base.convert("L")
         sombra = cinza.point(lambda v: int(max(0, 150 - v) * 0.9))  # mais forte nas partes escuras
